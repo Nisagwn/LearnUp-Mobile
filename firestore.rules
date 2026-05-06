@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Kullanıcılar sadece kendi profil bilgilerini okuyabilir ve güncelleyebilir
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Kullanıcılar sadece kendi alt koleksiyonu olan chats altındaki dökümanlara erişebilir
+      match /chats/{chatId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Diğer koleksiyonlar (örn. sorular vb.) için varsayılan kurallar (geliştirme amaçlı açık bırakılabilir veya kısıtlanabilir)
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
