@@ -48,3 +48,9 @@ app-example
 /android
 node_modules
 serviceAccountKey.json
+# Firebase Admin SDK & Legacy Secrets
+serviceAccountKey.json
+functions/serviceAccountKey.json
+_migrate/.env.legacy
+expo.log
+functions/firestore-debug.log
