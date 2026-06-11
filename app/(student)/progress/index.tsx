@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -6,6 +6,7 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { Flame, Target, TrendingUp, CheckCircle2, BarChart3, Play } from 'lucide-react-native';
 import { UserStatsContext } from '@/contexts/UserStatsContext';
+import { ProgressBackground } from '@/components/progress/ProgressBackground';
 import { buildStudyPlan, type StudyTask } from '@/utils/studyPlan';
 import { pickTopForRetake } from '@/services/srsApi';
 import { ChatFAB } from '@/components/common/ChatFAB';
@@ -21,6 +22,7 @@ import { StudyPlanCard } from '@/components/progress/StudyPlanCard';
 import { MasteryRow } from '@/components/progress/MasteryRow';
 import { ConsistencyHeatmap } from '@/components/progress/ConsistencyHeatmap';
 import { resolveSubject } from '@/utils/subjects';
+import { getStudentJoinedClasses, getTeacherInfo } from '@/services/classApi';
 
 const PERF_TABS = [
   { id: 'weekly', label: 'Haftalık' },
@@ -43,7 +45,7 @@ function startRetake(router: ReturnType<typeof useRouter>, cards: ReturnType<typ
 }
 
 export default function ProgressScreen() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const router = useRouter();
   const ctx = useContext(UserStatsContext);
 
@@ -58,12 +60,80 @@ export default function ProgressScreen() {
   const dailyActivity = ctx?.dailyActivity ?? [];
   const weeklyData = ctx?.weeklyData ?? [];
   const monthlyData = ctx?.monthlyData ?? [];
-  const classRanking = ctx?.classRanking;
   const gamification = ctx?.gamification;
   const userProfile = ctx?.userProfile;
   const loading = ctx?.loading ?? false;
+  const currentUser = ctx?.currentUser;
+  const loadClassRanking = ctx?.loadClassRanking;
 
   const [view, setView] = useState<'weekly' | 'monthly'>('weekly');
+
+  // ── Sınıf sıralaması: katıldığın sınıflar arasından seç (aktif sınıfı DEĞİŞTİRMEDEN) ──
+  const joinedClasses = useMemo(
+    () => getStudentJoinedClasses(userProfile),
+    [userProfile],
+  );
+  const primaryTeacherId: string | null = userProfile?.teacherId ?? null;
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
+  const activeTeacherId = selectedTeacherId ?? primaryTeacherId;
+  const [branchMap, setBranchMap] = useState<Record<string, string | null>>({});
+  const [selectedRanking, setSelectedRanking] = useState<
+    { rank: number | null; total: number | null; loading?: boolean } | null
+  >(null);
+
+  // Öğretmen branşlarını çöz ("Matematik sınıfı" etiketi için)
+  useEffect(() => {
+    const missing = joinedClasses.filter((c) => !(c.teacherId in branchMap));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        missing.map(
+          async (c) =>
+            [c.teacherId, (await getTeacherInfo(c.teacherId))?.branch ?? null] as const,
+        ),
+      );
+      if (cancelled) return;
+      setBranchMap((prev) => {
+        const next = { ...prev };
+        for (const [id, b] of entries) next[id] = b;
+        return next;
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [joinedClasses, branchMap]);
+
+  // Seçili sınıfın sıralamasını izole yükle (paylaşılan/ana sayfa sıralamasını bozmadan)
+  useEffect(() => {
+    if (!activeTeacherId || !currentUser?.uid || !loadClassRanking) {
+      setSelectedRanking(null);
+      return;
+    }
+    let cancelled = false;
+    setSelectedRanking((prev) => ({
+      rank: prev?.rank ?? null,
+      total: prev?.total ?? null,
+      loading: true,
+    }));
+    (async () => {
+      const r = await loadClassRanking(currentUser.uid, activeTeacherId, { setShared: false });
+      if (!cancelled) setSelectedRanking(r);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTeacherId, currentUser?.uid, loadClassRanking]);
+
+  const classLabel = (c: { teacherId: string; teacherName: string }) => {
+    const branch = branchMap[c.teacherId];
+    const base =
+      (branch && branch.trim()) ||
+      (c.teacherName && c.teacherName !== 'Öğretmen' ? c.teacherName : null) ||
+      'Sınıf';
+    return `${base} sınıfı`;
+  };
 
   const tasks = useMemo(
     () =>
@@ -170,7 +240,10 @@ export default function ProgressScreen() {
       if (top.length > 0 && startRetake(router, top)) return;
       // snapshot yoksa derse düş
     }
-    router.push(`/(student)/quiz/${task.subject.toLowerCase()}` as never);
+    // Navigasyon ham ders adıyla (routeSubject) yapılır — Firestore `category`
+    // eşleşmesi birebir; görünen ad Türkçe kanonik (task.subject) olsa da route ham kalır.
+    const route = (task.routeSubject || task.subject).toLowerCase();
+    router.push(`/(student)/quiz/${route}` as never);
   };
 
   const openSubject = (subject: string) =>
@@ -180,7 +253,8 @@ export default function ProgressScreen() {
   const isEmpty = !loading && (stats?.totalSolved ?? 0) === 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-base" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-bg-surface" edges={['top']}>
+      <ProgressBackground width={width} height={height} />
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <Animated.View entering={FadeInUp.duration(350)} className="px-5 pt-2">
           <Text className="text-3xl font-bold text-text-primary">İlerleme</Text>
@@ -307,14 +381,64 @@ export default function ProgressScreen() {
               />
             </Animated.View>
 
-            {classRanking?.rank != null && classRanking?.total != null ? (
-              <Animated.View entering={FadeInUp.delay(320).duration(350)} className="mt-4 px-5">
-                <ClassRankRow
-                  rank={classRanking.rank}
-                  total={classRanking.total}
-                  loading={classRanking.loading}
-                  onPress={() => router.push('/(student)/league' as never)}
-                />
+            {joinedClasses.length > 0 ? (
+              <Animated.View entering={FadeInUp.delay(320).duration(350)} className="mt-6 px-5">
+                <SectionHeader title="Sınıf Sıralaması" />
+
+                {joinedClasses.length > 1 ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="mt-2"
+                    contentContainerStyle={{ gap: 8, paddingRight: 8 }}
+                  >
+                    {joinedClasses.map((c) => {
+                      const active = activeTeacherId === c.teacherId;
+                      return (
+                        <Pressable
+                          key={c.teacherId}
+                          onPress={() => setSelectedTeacherId(c.teacherId)}
+                          className={`rounded-full border px-3 py-1.5 ${
+                            active
+                              ? 'border-accent bg-accent-soft'
+                              : 'border-border-soft bg-bg-surface'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-semibold ${
+                              active ? 'text-accent-fg' : 'text-text-muted'
+                            }`}
+                          >
+                            {classLabel(c)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                ) : (
+                  <Text className="mt-1 text-xs text-text-muted">
+                    {classLabel(joinedClasses[0])}
+                  </Text>
+                )}
+
+                <View className="mt-3">
+                  {selectedRanking?.rank != null && selectedRanking?.total != null ? (
+                    <ClassRankRow
+                      rank={selectedRanking.rank}
+                      total={selectedRanking.total}
+                      loading={selectedRanking.loading}
+                      onPress={() => router.push('/(student)/league' as never)}
+                    />
+                  ) : (
+                    <View className="rounded-2xl border border-border-soft bg-bg-surface p-4">
+                      <Text className="text-xs text-text-muted">
+                        {selectedRanking?.loading
+                          ? 'Sıralama hesaplanıyor…'
+                          : 'Bu sınıfta henüz sıralama yok.'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </Animated.View>
             ) : null}
 

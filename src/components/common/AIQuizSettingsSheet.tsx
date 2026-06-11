@@ -94,7 +94,7 @@ export function AIQuizSettingsSheet({
             <View className="flex-row items-center justify-between px-5 pt-2 pb-3">
               <View className="flex-row items-center flex-1">
                 <View className="h-9 w-9 items-center justify-center rounded-xl bg-accent-soft">
-                  <Sparkles color="#6366F1" size={18} />
+                  <Sparkles color="#16A34A" size={18} />
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-base font-bold text-text-primary">AI Soru Üret</Text>

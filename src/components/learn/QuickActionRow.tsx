@@ -25,7 +25,7 @@ export function QuickActionRow({
   onMockExam,
 }: Props) {
   const actions: Action[] = [
-    { id: 'quick', label: 'Hızlı Quiz', icon: Zap, color: '#6366F1', bg: '#EEF2FF', onPress: onQuickQuiz },
+    { id: 'quick', label: 'Hızlı Quiz', icon: Zap, color: '#16A34A', bg: '#DCFCE7', onPress: onQuickQuiz },
     { id: 'flashcard', label: 'Flashcard', icon: Layers, color: '#0891B2', bg: '#CFFAFE', onPress: onFlashcard },
     { id: 'focus', label: 'Odak Quiz', icon: Target, color: '#DC2626', bg: '#FEE2E2', onPress: onFocusQuiz },
     { id: 'mock', label: 'Mock Sınav', icon: GraduationCap, color: '#D97706', bg: '#FEF3C7', onPress: onMockExam },

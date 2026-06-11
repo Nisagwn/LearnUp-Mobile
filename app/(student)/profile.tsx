@@ -37,7 +37,7 @@ import { ProfileHero } from '@/components/profile/ProfileHero';
 import { AccountSummaryCard } from '@/components/profile/AccountSummaryCard';
 import { ClassMembershipCard } from '@/components/profile/ClassMembershipCard';
 import { JoinClassSheet } from '@/components/profile/JoinClassSheet';
-import { leaveClass } from '@/services/classApi';
+import { getStudentJoinedClasses, leaveSpecificClass } from '@/services/classApi';
 import { LeagueCard } from '@/components/home/LeagueCard';
 import { ClassRankRow } from '@/components/home/ClassRankRow';
 import { BadgeStrip } from '@/components/home/BadgeStrip';
@@ -92,19 +92,27 @@ export default function Profile() {
   const [savingGrade, setSavingGrade] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const currentGrade: string | null = (profile?.grade as string | undefined) ?? null;
-  const teacherId = (profile?.teacherId as string | undefined) ?? null;
-  const teacherName = (profile?.teacherName as string | undefined) ?? null;
+  const joinedClasses = getStudentJoinedClasses(
+    profile as {
+      teacherIds?: unknown;
+      teacherId?: unknown;
+      teacherNames?: unknown;
+      teacherName?: unknown;
+    } | null,
+  );
 
-  const handleLeaveClass = () => {
+  const handleLeaveClass = (teacherIdToLeave: string) => {
     if (!user) return;
-    Alert.alert('Sınıftan ayrıl', 'Bu sınıftan ayrılmak istediğine emin misin?', [
+    const cls = joinedClasses.find((c) => c.teacherId === teacherIdToLeave);
+    const label = cls?.teacherName ?? 'Bu sınıftan';
+    Alert.alert('Sınıftan ayrıl', `${label} sınıfından ayrılmak istediğine emin misin?`, [
       { text: 'Vazgeç', style: 'cancel' },
       {
         text: 'Ayrıl',
         style: 'destructive',
         onPress: async () => {
           try {
-            await leaveClass(user.uid);
+            await leaveSpecificClass(user.uid, teacherIdToLeave);
           } catch (err) {
             Alert.alert('Hata', (err as Error).message);
           }
@@ -265,11 +273,10 @@ export default function Profile() {
 
           {profile?.role !== 'teacher' && (
             <Animated.View entering={FadeInUp.delay(168).duration(350)} className="mt-6 px-5">
-              <SectionHeader title="Sınıfım" />
+              <SectionHeader title="Sınıflarım" />
               <View className="mt-3">
                 <ClassMembershipCard
-                  teacherId={teacherId}
-                  teacherName={teacherName}
+                  classes={joinedClasses}
                   classRank={classRanking?.rank ?? null}
                   classTotal={classRanking?.total ?? null}
                   onJoinPress={() => setJoinOpen(true)}

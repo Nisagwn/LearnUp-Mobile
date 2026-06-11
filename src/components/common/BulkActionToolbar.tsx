@@ -59,7 +59,7 @@ export function BulkActionToolbar({
         <View className="flex-row items-center" style={{ gap: 6 }}>
           {actions.map((a) => {
             const Icon = a.icon;
-            const color = a.destructive ? '#DC2626' : a.color ?? '#4F46E5';
+            const color = a.destructive ? '#DC2626' : a.color ?? '#15803D';
             return (
               <Pressable
                 key={a.id}

@@ -108,7 +108,7 @@ export function SubjectCard({
     const subjectLower = subject.toLowerCase();
     return BADGE_CATALOG.filter((b) => {
       if (!unlockedBadges[b.id]) return false;
-      if (b.group === 'mastery') return true;
+      if (b.family === 'flower') return true;
       if (b.id.toLowerCase().includes(subjectLower)) return true;
       return false;
     }).slice(0, 3);
@@ -121,7 +121,7 @@ export function SubjectCard({
 
   const menuItems = useMemo<OverflowMenuItem[]>(() => {
     const items: OverflowMenuItem[] = [
-      { id: 'ai', label: 'AI ile soru üret', icon: Sparkles, iconColor: '#6366F1' },
+      { id: 'ai', label: 'AI ile soru üret', icon: Sparkles, iconColor: '#16A34A' },
       { id: 'explain', label: 'Konuyu anlat', icon: MessageCircle, iconColor: '#475569' },
     ];
     if (onFlashcard) items.push({ id: 'flashcard', label: 'Flashcard çalış', icon: Layers, iconColor: '#0891B2' });
@@ -178,7 +178,7 @@ export function SubjectCard({
           ) : null}
           {estimatedMinutes && estimatedMinutes > 0 ? (
             <View className="flex-row items-center rounded-full bg-accent-soft px-2 py-0.5">
-              <Clock color="#4F46E5" size={11} />
+              <Clock color="#15803D" size={11} />
               <Text className="ml-1 text-[10px] font-semibold text-accent-fg">
                 ~{estimatedMinutes} dk
               </Text>
@@ -188,7 +188,7 @@ export function SubjectCard({
       ) : null}
 
       <View className="mt-3">
-        <AnimatedProgressBar value={ratio} height={6} fillColor="#6366F1" />
+        <AnimatedProgressBar value={ratio} height={6} fillColor="#16A34A" />
       </View>
 
       <View className="mt-3 flex-row flex-wrap items-center" style={{ gap: 8 }}>

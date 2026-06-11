@@ -19,6 +19,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { auth, db } from '@/services/firebase';
+import { getOptions, resolveCorrectIndex } from '@/utils/questionShape';
 
 export interface QuestionRow {
   id: string;
@@ -27,6 +28,14 @@ export interface QuestionRow {
   grade?: string;
   difficulty?: string;
   isAI: boolean;
+  /** İnceleme kartı için satıra taşınan tam veri (ekstra fetch/WebView gerekmez). */
+  options?: string[];
+  answer?: number;
+  explanation?: string;
+  /** Onay durumu — false ise öğretmen onayı gerekir. */
+  verified?: boolean;
+  topic?: string;
+  subTopic?: string;
 }
 
 interface RawDoc {
@@ -39,10 +48,38 @@ interface RawDoc {
   difficulty?: string;
   is_ai_generated?: boolean;
   isAI?: boolean;
+  options?: unknown;
+  choices?: unknown;
+  correct_answer?: unknown;
+  answer?: unknown;
+  correctIndex?: number;
+  explanation?: string;
+  verified?: boolean;
+  topic?: string;
+  sub_topic?: string;
 }
 
 function getText(d: RawDoc): string {
   return d.text || d.question_text || d.question || 'Metinsiz soru';
+}
+
+/** RawDoc → QuestionRow (seçenek + cevap + onay durumu dahil). */
+function rawToRow(id: string, raw: RawDoc): QuestionRow {
+  const options = getOptions(raw);
+  return {
+    id,
+    text: getText(raw),
+    subject: String(raw.subject ?? raw.category ?? 'Genel'),
+    grade: typeof raw.grade === 'string' ? raw.grade : undefined,
+    difficulty: typeof raw.difficulty === 'string' ? raw.difficulty : undefined,
+    isAI: raw.is_ai_generated === true || raw.isAI === true,
+    options,
+    answer: resolveCorrectIndex(raw, options),
+    explanation: typeof raw.explanation === 'string' ? raw.explanation : undefined,
+    verified: raw.verified === true,
+    topic: typeof raw.topic === 'string' ? raw.topic : undefined,
+    subTopic: typeof raw.sub_topic === 'string' ? raw.sub_topic : undefined,
+  };
 }
 
 type Props = {
@@ -94,17 +131,7 @@ export function QuestionPickerSheet({ visible, initialSelected, onClose, onConfi
         query(collection(db, 'questions'), where('teacherId', '==', uid)),
         (snap) => {
           const arr: QuestionRow[] = [];
-          snap.forEach((d) => {
-            const raw = d.data() as RawDoc;
-            arr.push({
-              id: d.id,
-              text: getText(raw),
-              subject: String(raw.subject ?? raw.category ?? 'Genel'),
-              grade: typeof raw.grade === 'string' ? raw.grade : undefined,
-              difficulty: typeof raw.difficulty === 'string' ? raw.difficulty : undefined,
-              isAI: raw.is_ai_generated === true || raw.isAI === true,
-            });
-          });
+          snap.forEach((d) => arr.push(rawToRow(d.id, d.data() as RawDoc)));
           setMine(arr);
           pendingMine = false;
           checkDone();
@@ -120,17 +147,7 @@ export function QuestionPickerSheet({ visible, initialSelected, onClose, onConfi
         query(collection(db, 'questions'), where('verified', '==', true)),
         (snap) => {
           const arr: QuestionRow[] = [];
-          snap.forEach((d) => {
-            const raw = d.data() as RawDoc;
-            arr.push({
-              id: d.id,
-              text: getText(raw),
-              subject: String(raw.subject ?? raw.category ?? 'Genel'),
-              grade: typeof raw.grade === 'string' ? raw.grade : undefined,
-              difficulty: typeof raw.difficulty === 'string' ? raw.difficulty : undefined,
-              isAI: raw.is_ai_generated === true || raw.isAI === true,
-            });
-          });
+          snap.forEach((d) => arr.push(rawToRow(d.id, d.data() as RawDoc)));
           setApproved(arr);
           pendingApproved = false;
           checkDone();
@@ -231,7 +248,7 @@ export function QuestionPickerSheet({ visible, initialSelected, onClose, onConfi
 
             {loading ? (
               <View className="h-40 items-center justify-center">
-                <ActivityIndicator color="#6366F1" />
+                <ActivityIndicator color="#16A34A" />
               </View>
             ) : (
               <FlatList

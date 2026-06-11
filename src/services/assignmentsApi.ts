@@ -128,3 +128,41 @@ export function subscribeTeacherAssignments(
     },
   );
 }
+
+/**
+ * Öğrencinin bağlı olduğu öğretmen(ler)in ödevlerini dinler.
+ * Tek bir teacherId ya da teacherIds dizisi kabul eder. Multi-class destekli.
+ * Firestore `in` max 30 değer destekler — fazlası slice'lanır.
+ */
+export function subscribeStudentAssignments(
+  teacherIdOrIds: string | string[],
+  onChange: (items: TeacherAssignment[]) => void,
+): Unsubscribe | null {
+  const ids = (Array.isArray(teacherIdOrIds) ? teacherIdOrIds : [teacherIdOrIds]).filter(
+    (id): id is string => typeof id === 'string' && id.length > 0,
+  );
+  if (ids.length === 0) {
+    onChange([]);
+    return null;
+  }
+  const safeIds = ids.slice(0, 30);
+  const q =
+    safeIds.length === 1
+      ? query(collection(db, 'assignments'), where('teacherId', '==', safeIds[0]))
+      : query(collection(db, 'assignments'), where('teacherId', 'in', safeIds));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const arr: TeacherAssignment[] = [];
+      snap.forEach((d) => {
+        arr.push(normalizeAssignment(d.id, d.data() as RawAssignment));
+      });
+      arr.sort((a, b) => b.createdAtMs - a.createdAtMs);
+      onChange(arr);
+    },
+    (err) => {
+      console.warn('student assignments listener:', err.message);
+      onChange([]);
+    },
+  );
+}

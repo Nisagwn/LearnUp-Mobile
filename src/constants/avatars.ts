@@ -22,13 +22,13 @@ export type AvatarDef = {
 export const AVATARS: AvatarDef[] = [
   // ── Erkek (6) ─────────────────────────────────────────────────────────────
   { id: 'axel', image: require('../../assets/avatars/axel.png'), label: 'Axel', gender: 'male',   ringColor: '#60A5FA' },
-  { id: 'kai',  image: require('../../assets/avatars/kai.png'),  label: 'Kai',  gender: 'male',   ringColor: '#A78BFA' },
-  { id: 'zeno', image: require('../../assets/avatars/zeno.png'), label: 'Zeno', gender: 'male',   ringColor: '#818CF8' },
+  { id: 'kai',  image: require('../../assets/avatars/kai.png'),  label: 'Kai',  gender: 'male',   ringColor: '#84CC16' },
+  { id: 'zeno', image: require('../../assets/avatars/zeno.png'), label: 'Zeno', gender: 'male',   ringColor: '#4ADE80' },
   { id: 'theo', image: require('../../assets/avatars/theo.png'), label: 'Theo', gender: 'male',   ringColor: '#FBBF24' },
-  { id: 'omar', image: require('../../assets/avatars/omar.png'), label: 'Omar', gender: 'male',   ringColor: '#8B5CF6' },
+  { id: 'omar', image: require('../../assets/avatars/omar.png'), label: 'Omar', gender: 'male',   ringColor: '#15803D' },
   { id: 'dax',  image: require('../../assets/avatars/dax.png'),  label: 'Dax',  gender: 'male',   ringColor: '#F97316' },
   // ── Kız (6) ───────────────────────────────────────────────────────────────
-  { id: 'luna', image: require('../../assets/avatars/luna.png'), label: 'Luna', gender: 'female', ringColor: '#F472B6' },
+  { id: 'luna', image: require('../../assets/avatars/luna.png'), label: 'Luna', gender: 'female', ringColor: '#FB923C' },
   { id: 'mira', image: require('../../assets/avatars/mira.png'), label: 'Mira', gender: 'female', ringColor: '#FB923C' },
   { id: 'ivy',  image: require('../../assets/avatars/ivy.png'),  label: 'Ivy',  gender: 'female', ringColor: '#F59E0B' },
   { id: 'nova', image: require('../../assets/avatars/nova.png'), label: 'Nova', gender: 'female', ringColor: '#E879F9' },

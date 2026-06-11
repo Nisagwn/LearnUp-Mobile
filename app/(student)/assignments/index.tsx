@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,18 +49,33 @@ export default function AssignmentsList() {
   const router = useRouter();
   const safeBack = useSafeBack('/(student)/profile');
   const ctx = useContext(UserStatsContext);
-  const teacherId: string | undefined = ctx?.userProfile?.teacherId;
+  const teacherIds: string[] = useMemo(() => {
+    const raw = ctx?.userProfile;
+    if (Array.isArray(raw?.teacherIds)) {
+      return (raw.teacherIds as unknown[]).filter(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+      );
+    }
+    if (typeof raw?.teacherId === 'string' && raw.teacherId) return [raw.teacherId];
+    return [];
+  }, [ctx?.userProfile?.teacherIds, ctx?.userProfile?.teacherId]);
+  const teacherIdsKey = teacherIds.join(',');
   const [items, setItems] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Record<string, SubmissionBrief>>({});
   const [loading, setLoading] = useState(true);
 
-  // Ödevler
+  // Ödevler (multi-class: `in` operatörü max 30)
   useEffect(() => {
-    if (!teacherId) {
+    if (teacherIds.length === 0) {
+      setItems([]);
       setLoading(false);
       return;
     }
-    const q = query(collection(db, 'assignments'), where('teacherId', '==', teacherId));
+    const safeIds = teacherIds.slice(0, 30);
+    const q =
+      safeIds.length === 1
+        ? query(collection(db, 'assignments'), where('teacherId', '==', safeIds[0]))
+        : query(collection(db, 'assignments'), where('teacherId', 'in', safeIds));
     const unsub = onSnapshot(
       q,
       (snap) => {
@@ -72,7 +87,8 @@ export default function AssignmentsList() {
       () => setLoading(false),
     );
     return unsub;
-  }, [teacherId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teacherIdsKey]);
 
   // Submission durumları
   useEffect(() => {
@@ -121,8 +137,10 @@ export default function AssignmentsList() {
             <EmptyState
               lottieSource={lottie.empty}
               icon={ClipboardList}
-              title={teacherId ? 'Henüz ödev yok' : 'Bir sınıfa katılmadın'}
-              subtitle={teacherId ? 'Öğretmenin ödev gönderince burada görünecek' : undefined}
+              title={teacherIds.length > 0 ? 'Henüz ödev yok' : 'Bir sınıfa katılmadın'}
+              subtitle={
+                teacherIds.length > 0 ? 'Öğretmenin ödev gönderince burada görünecek' : undefined
+              }
             />
           }
           renderItem={({ item }) => {

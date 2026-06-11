@@ -61,7 +61,7 @@ export function TeacherBioCard({ bio, school, onSaved }: Props) {
             hitSlop={8}
             className="flex-row items-center rounded-full bg-accent-soft px-2.5 py-1 active:opacity-70"
           >
-            <Pencil color="#6366F1" size={11} />
+            <Pencil color="#16A34A" size={11} />
             <Text className="ml-1 text-[11px] font-semibold text-accent-fg">
               {hasContent ? 'Düzenle' : 'Ekle'}
             </Text>

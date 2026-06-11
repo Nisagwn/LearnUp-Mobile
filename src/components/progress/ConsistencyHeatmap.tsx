@@ -14,8 +14,8 @@ const DAY_LABELS = ['Pzt', '', 'Çar', '', 'Cum', '', 'Paz'];
 function intensityColor(count: number): string {
   if (count <= 0) return '#F1F5F9';
   if (count < 3) return '#C7D2FE';
-  if (count < 6) return '#818CF8';
-  if (count < 10) return '#6366F1';
+  if (count < 6) return '#4ADE80';
+  if (count < 10) return '#16A34A';
   return '#4338CA';
 }
 
@@ -91,7 +91,7 @@ export function ConsistencyHeatmap({ data }: Props) {
 
       <View className="mt-2 flex-row items-center justify-end gap-1">
         <Text className="mr-1 text-[9px] text-text-muted">Az</Text>
-        {['#F1F5F9', '#C7D2FE', '#818CF8', '#6366F1', '#4338CA'].map((c) => (
+        {['#F1F5F9', '#C7D2FE', '#4ADE80', '#16A34A', '#4338CA'].map((c) => (
           <View key={c} style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: c }} />
         ))}
         <Text className="ml-1 text-[9px] text-text-muted">Çok</Text>

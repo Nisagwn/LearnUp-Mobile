@@ -47,12 +47,12 @@ export function RecommendedTopicsGrid({ topics, loadingId, onTopicPress }: Props
               <View className="flex-row items-center">
                 <View
                   className="h-7 w-7 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: '#EEF2FF' }}
+                  style={{ backgroundColor: '#DCFCE7' }}
                 >
                   {isLoading ? (
-                    <ActivityIndicator size="small" color="#6366F1" />
+                    <ActivityIndicator size="small" color="#16A34A" />
                   ) : (
-                    <Sparkles color="#6366F1" size={14} />
+                    <Sparkles color="#16A34A" size={14} />
                   )}
                 </View>
                 <ChevronRight color="#94A3B8" size={14} style={{ marginLeft: 'auto' }} />

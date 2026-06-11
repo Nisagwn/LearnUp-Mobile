@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { PressableScale } from './PressableScale';
-import { shadows, type ShadowKey } from '@/constants/theme';
+import { shadows, gradients, type ShadowKey } from '@/constants/theme';
 
 export type CardVariant = 'flat' | 'elevated' | 'gradient' | 'glow';
 
@@ -47,7 +47,7 @@ export function Card({
   const inner =
     variant === 'gradient' ? (
       <LinearGradient
-        colors={gradientColors ?? (['#6366F1', '#8B5CF6'] as const)}
+        colors={gradientColors ?? gradients.brand}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ borderRadius: 16 }}

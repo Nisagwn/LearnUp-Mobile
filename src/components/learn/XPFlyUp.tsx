@@ -55,8 +55,8 @@ export function XPFlyUp({ amount, topOffset = 120, onComplete }: Props) {
       <View
         className="flex-row items-center rounded-full px-4 py-2"
         style={{
-          backgroundColor: '#6366F1',
-          shadowColor: '#6366F1',
+          backgroundColor: '#16A34A',
+          shadowColor: '#16A34A',
           shadowOpacity: 0.4,
           shadowOffset: { width: 0, height: 4 },
           shadowRadius: 10,

@@ -34,6 +34,19 @@ service cloud.firestore {
       match /bookmark_folders/{folderId} {
         allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
       }
+
+      // In-app bildirim merkezi — kullanıcı yalnız okur ve `readAt` alanını
+      // güncelleyebilir; içerik (title/body/type/...) sadece Cloud Functions
+      // tarafından yazılır. Silme yalnızca sahibine açık (UI'da long-press sil).
+      match /notifications/{notifId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if false;
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['readAt']);
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Haftalık lig sıralama kayıtları — herkes okur; yalnızca Cloud Functions yazar.

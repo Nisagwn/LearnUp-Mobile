@@ -51,7 +51,7 @@ export function CreateFolderSheet({ visible, onClose, onCreate }: Props) {
               <View className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border-soft" />
               <View className="flex-row items-center">
                 <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-soft">
-                  <FolderPlus color="#4F46E5" size={18} />
+                  <FolderPlus color="#15803D" size={18} />
                 </View>
                 <Text className="ml-3 flex-1 text-base font-semibold text-text-primary">
                   Yeni klasör

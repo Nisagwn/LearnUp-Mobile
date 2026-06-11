@@ -72,13 +72,13 @@ export function ActiveAssignmentsCard({
 
       {loading && items.length === 0 ? (
         <View className="mt-3 items-center rounded-2xl border border-border-soft bg-bg-surface p-6">
-          <ActivityIndicator color="#6366F1" />
+          <ActivityIndicator color="#16A34A" />
         </View>
       ) : items.length === 0 ? (
         <Card>
           <View className="items-center py-4">
             <View className="h-12 w-12 items-center justify-center rounded-full bg-accent-soft">
-              <ClipboardList color="#6366F1" size={22} />
+              <ClipboardList color="#16A34A" size={22} />
             </View>
             <Text className="mt-3 text-sm font-semibold text-text-primary">
               Henüz aktif ödev yok

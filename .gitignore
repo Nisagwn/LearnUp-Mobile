@@ -48,9 +48,25 @@ app-example
 /android
 node_modules
 serviceAccountKey.json
-# Firebase Admin SDK & Legacy Secrets
+# Firebase Admin SDK & Legacy Secrets (ASLA commit etme — tam yetkili gizli anahtar)
 serviceAccountKey.json
 functions/serviceAccountKey.json
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json
+*-firebase-adminsdk-*.json
 _migrate/.env.legacy
 expo.log
 functions/firestore-debug.log
+
+# Firebase client config — API key dahil. Public repo'da görünmemeli.
+# Lokal kopyaları geliştiriciler kendi tutar; CI/CD env'den enjekte eder.
+google-services.json
+GoogleService-Info.plist
+
+# EAS build profile — Firebase env değişkenleri açık.
+# eas.example.json şablon olarak commit'lenir.
+eas.json
+
+# Lokal/geliştirme test invoker'ları (gerekirse lokal tut)
+functions/test_invoke_*.js

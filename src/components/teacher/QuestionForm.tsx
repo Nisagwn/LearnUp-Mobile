@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Check, Eye, Plus, Trash2 } from 'lucide-react-native';
 import { MathRenderer } from '@/components/quiz/MathRenderer';
+import { getCurriculumTopics } from '@/constants/curriculum';
 import type { Difficulty } from '@/types/quiz';
 import type { ManualQuestionInput } from '@/services/teacherQuestionsApi';
 
@@ -47,6 +48,12 @@ export function QuestionForm({
   const [correctIndex, setCorrectIndex] = useState<number>(initial?.correctIndex ?? 0);
   const [explanation, setExplanation] = useState(initial?.explanation ?? '');
   const [previewQ, setPreviewQ] = useState(false);
+
+  // Ders standart yazıldıysa o ders+sınıfın müfredat konuları çip olarak çıkar.
+  const curriculumTopics = useMemo(
+    () => getCurriculumTopics(subject.trim(), [Number(grade)]),
+    [subject, grade],
+  );
 
   const setChoice = (i: number, value: string) =>
     setChoices((arr) => arr.map((c, idx) => (idx === i ? value : c)));
@@ -150,13 +157,17 @@ export function QuestionForm({
         {/* Konu / alt konu */}
         <View className="mt-4 flex-row gap-3">
           <View className="flex-1">
-            <Text className="text-sm font-semibold text-text-primary">Konu</Text>
+            <Text className="text-sm font-semibold text-text-primary">
+              Konu <Text className="text-danger">*</Text>
+            </Text>
             <TextInput
               value={topic}
               onChangeText={setTopic}
               placeholder="Örn: Türev"
               placeholderTextColor="#94A3B8"
-              className="mt-1.5 rounded-xl border border-border-soft bg-bg-surface px-3.5 py-3 text-sm text-text-primary"
+              className={`mt-1.5 rounded-xl border bg-bg-surface px-3.5 py-3 text-sm text-text-primary ${
+                topic.trim() ? 'border-border-soft' : 'border-warning/60'
+              }`}
             />
           </View>
           <View className="flex-1">
@@ -170,6 +181,40 @@ export function QuestionForm({
             />
           </View>
         </View>
+        {curriculumTopics.length > 0 ? (
+          <View className="mt-2">
+            <Text className="mb-1 text-[10px] text-text-muted">
+              Müfredat konuları — dokunarak seç (zorunlu)
+            </Text>
+            <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+              {curriculumTopics.map((t) => {
+                const active = topic.trim() === t;
+                return (
+                  <Pressable
+                    key={t}
+                    onPress={() => setTopic(t)}
+                    className={`rounded-full border px-2.5 py-1 active:opacity-80 ${
+                      active ? 'border-accent bg-accent-soft' : 'border-border-soft bg-bg-surface'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[11px] font-semibold ${
+                        active ? 'text-accent-fg' : 'text-text-secondary'
+                      }`}
+                    >
+                      {t}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : (
+          <Text className="mt-1 text-[10px] text-text-muted">
+            Konu zorunludur. Ders adını standart yazarsan (örn. Matematik) müfredat konuları çip
+            olarak çıkar.
+          </Text>
+        )}
 
         {/* Soru metni */}
         <View className="mt-5 flex-row items-center justify-between">
@@ -212,7 +257,7 @@ export function QuestionForm({
               onPress={addChoice}
               className="flex-row items-center rounded-full bg-bg-elevated px-2.5 py-1 active:opacity-80"
             >
-              <Plus color="#4F46E5" size={12} />
+              <Plus color="#15803D" size={12} />
               <Text className="ml-1 text-[11px] font-semibold text-accent-fg">Şık Ekle</Text>
             </Pressable>
           ) : null}

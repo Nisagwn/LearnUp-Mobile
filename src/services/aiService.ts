@@ -61,6 +61,12 @@ export interface GeneratedQuestion {
   choices: string[];
   answer: number;
   hint?: string;
+  /** Backend verifier'ın atadığı kalite puanı (1-5). Havuza yazılır. */
+  qualityScore?: number;
+  /** AI'nın soruya atadığı MEB üst konusu (etiketsiz/"genel" soru olmasın diye). */
+  topic?: string;
+  /** AI'nın atadığı alt konu. */
+  subTopic?: string;
 }
 
 // JSON dizisini AI yanıtından çıkarmaya çalışır.
@@ -218,7 +224,8 @@ function normalizeQuestionItem(item: unknown): GeneratedQuestion | null {
   }
 
   const hint = typeof obj.hint === 'string' ? obj.hint : undefined;
-  return { question, choices: finalChoices, answer: finalAnswer, hint };
+  const qualityScore = typeof obj.qualityScore === 'number' ? obj.qualityScore : undefined;
+  return { question, choices: finalChoices, answer: finalAnswer, hint, qualityScore };
 }
 
 // Server-side parseTaggedQuestions çıktısının client karşılığı
@@ -227,6 +234,9 @@ interface ServerTaggedQuestion {
   options: string[];
   correct_answer: string;
   explanation?: string;
+  qualityScore?: number;
+  topic?: string;
+  sub_topic?: string;
 }
 
 function fromTagged(q: ServerTaggedQuestion, hintFallback?: string): GeneratedQuestion | null {
@@ -239,6 +249,9 @@ function fromTagged(q: ServerTaggedQuestion, hintFallback?: string): GeneratedQu
     choices: q.options,
     answer: idx,
     hint: typeof q.explanation === 'string' && q.explanation ? q.explanation : hintFallback,
+    qualityScore: typeof q.qualityScore === 'number' ? q.qualityScore : undefined,
+    topic: typeof q.topic === 'string' && q.topic.trim() ? q.topic.trim() : undefined,
+    subTopic: typeof q.sub_topic === 'string' && q.sub_topic.trim() ? q.sub_topic.trim() : undefined,
   };
 }
 
@@ -256,6 +269,8 @@ interface GeneratePayload {
     explanation?: string;
   }>;
   userId?: string | null;
+  /** true → backend 70b + verifier + top-up (öğretmen/havuz). yoksa 8b fast (öğrenci). */
+  quality?: boolean;
 }
 
 async function callGenerateEndpoint(payload: GeneratePayload): Promise<GeneratedQuestion[]> {
@@ -305,22 +320,29 @@ async function callGenerateEndpoint(payload: GeneratePayload): Promise<Generated
  * Overload 2 (deprecated): (topic, count, difficulty) — geriye dönük uyumluluk,
  *   STRICT_CURRICULUM'a maplenir; grade için '10' fallback'i kullanılır.
  */
-export async function generateQuiz(mode: GenerateQuizMode): Promise<GeneratedQuestion[]>;
+export interface GenerateQuizOpts {
+  /** true → backend kalite katmanı (70b + verifier + top-up). Öğretmen/havuz üretiminde kullan. */
+  quality?: boolean;
+}
+export async function generateQuiz(mode: GenerateQuizMode, opts?: GenerateQuizOpts): Promise<GeneratedQuestion[]>;
 export async function generateQuiz(
   topic: string,
   count?: number,
   difficulty?: Difficulty,
+  opts?: GenerateQuizOpts,
 ): Promise<GeneratedQuestion[]>;
 export async function generateQuiz(
   arg1: GenerateQuizMode | string,
-  arg2?: number,
+  arg2?: number | GenerateQuizOpts,
   arg3?: Difficulty,
+  arg4?: GenerateQuizOpts,
 ): Promise<GeneratedQuestion[]> {
   // Eski imza — deprecated wrapper
   if (typeof arg1 === 'string') {
     const topic = arg1;
-    const count = arg2 ?? 5;
+    const count = (typeof arg2 === 'number' ? arg2 : undefined) ?? 5;
     const difficulty: Difficulty = arg3 ?? 'medium';
+    const quality = arg4?.quality === true;
     const safeCount = Math.max(1, Math.min(20, Math.floor(count)));
     return callGenerateEndpoint({
       mode: 'STRICT_CURRICULUM',
@@ -329,11 +351,13 @@ export async function generateQuiz(
       grade: '10',
       count: safeCount,
       difficulty,
+      quality,
     });
   }
 
   // Yeni discriminated union
   const m = arg1;
+  const opts = arg2 && typeof arg2 === 'object' ? arg2 : undefined;
   const safeCount = Math.max(1, Math.min(20, Math.floor(m.count)));
   const payload: GeneratePayload = {
     mode: m.kind,
@@ -342,6 +366,7 @@ export async function generateQuiz(
     grade: m.grade,
     count: safeCount,
     difficulty: m.difficulty,
+    quality: opts?.quality === true,
   };
   if (m.kind === 'ANALYZE_AND_DERIVE') {
     payload.sampleQuestions = m.sampleQuestions.slice(0, 5).map((s) => ({

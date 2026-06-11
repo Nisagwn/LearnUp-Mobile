@@ -1,6 +1,9 @@
 /**
  * Merkezi tasarım token'ları — JS tarafı (style/icon prop'ları için).
  *
+ * v2 — ORMAN/DOĞA TEMASI. İndigo/mor tamamen kaldırıldı; yeşil-toprak-altın
+ * paleti ile bahçe oyununa tematik tutarlılık sağlandı.
+ *
  * NativeWind/Tailwind class'ları global.css değişkenlerinden beslenir; ancak
  * Lucide ikon `color` prop'ları ve RN inline style'ları class kullanamaz.
  * Bu dosya o değerlerin TEK kaynağıdır ve global.css ile birebir eşleşir.
@@ -29,83 +32,101 @@ export type ColorPalette = {
   white: string;
 };
 
-/** Aydınlık tema — canlı/parlak. global.css :root ile eşleşir. */
+/** Aydınlık tema — text'ler nötr slate, accent/aksiyonlar yeşil. */
 export const lightPalette: ColorPalette = {
-  bgBase: '#FFFFFF',
-  bgSurface: '#F8FAFC',
-  bgElevated: '#F1F5F9',
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',
-  textMuted: '#94A3B8',
-  borderSoft: '#E2E8F0',
-  accent: '#6366F1',
-  accentFg: '#4F46E5',
-  accentSoft: '#EEF2FF',
-  accentGlow: '#818CF8',
-  success: '#16A34A',
-  successSoft: '#DCFCE7',
-  danger: '#DC2626',
-  dangerSoft: '#FEE2E2',
-  warning: '#D97706',
-  warningSoft: '#FEF3C7',
-  white: '#FFFFFF',
+  bgBase:        '#FFFFFF',
+  bgSurface:     '#F8FAFC',   // nötr soft (mint cast yok)
+  bgElevated:    '#F1F5F9',   // nötr hafif
+  textPrimary:   '#0F172A',   // slate-900 (okunabilirlik)
+  textSecondary: '#475569',   // slate-600
+  textMuted:     '#94A3B8',   // slate-400 (lime DEĞİL)
+  borderSoft:    '#E2E8F0',   // nötr border
+  accent:        '#16A34A',   // canlı yeşil (button/CTA)
+  accentFg:      '#15803D',   // moss (link)
+  accentSoft:    '#DCFCE7',   // mint chip bg
+  accentGlow:    '#4ADE80',   // taze yaprak
+  success:       '#22C55E',
+  successSoft:   '#DCFCE7',
+  danger:        '#DC2626',
+  dangerSoft:    '#FEE2E2',
+  warning:       '#CA8A04',   // altın güneş
+  warningSoft:   '#FEF9C3',
+  white:         '#FFFFFF',
 };
 
-/** Karanlık tema. global.css .dark ile eşleşir. */
+/** Karanlık tema — gece ormanı zemin + nötr açık text. */
 export const darkPalette: ColorPalette = {
-  bgBase: '#0F172A',
-  bgSurface: '#1E293B',
-  bgElevated: '#334155',
-  textPrimary: '#F1F5F9',
-  textSecondary: '#CBD5E1',
-  textMuted: '#94A3B8',
-  borderSoft: '#334155',
-  accent: '#818CF8',
-  accentFg: '#A5B4FC',
-  accentSoft: '#312E81',
-  accentGlow: '#A5B4FC',
-  success: '#22C55E',
-  successSoft: '#14532D',
-  danger: '#F87171',
-  dangerSoft: '#7F1D1D',
-  warning: '#F59E0B',
-  warningSoft: '#78350F',
-  white: '#FFFFFF',
+  bgBase:        '#0F172A',   // slate-900 (orman gece)
+  bgSurface:     '#1E293B',   // slate-800
+  bgElevated:    '#334155',   // slate-700
+  textPrimary:   '#F1F5F9',   // slate-100
+  textSecondary: '#CBD5E1',   // slate-300
+  textMuted:     '#94A3B8',   // slate-400
+  borderSoft:    '#334155',
+  accent:        '#4ADE80',   // parlak yeşil (button)
+  accentFg:      '#86EFAC',
+  accentSoft:    '#14532D',
+  accentGlow:    '#4ADE80',
+  success:       '#4ADE80',
+  successSoft:   '#14532D',
+  danger:        '#F87171',
+  dangerSoft:    '#7F1D1D',
+  warning:       '#FACC15',
+  warningSoft:   '#713F12',
+  white:         '#FFFFFF',
 };
 
 /**
  * Oyunlaştırılmış gradyanlar — LinearGradient `colors` prop'u için.
- * Parlak ve doygun; light/dark'ta da canlı durur (tema-bağımsız).
+ * Orman paleti — parlak ve doygun; light/dark'ta da canlı durur.
  */
 export const gradients = {
-  brand: ['#6366F1', '#8B5CF6'] as const, // indigo → mor (marka)
-  xp: ['#8B5CF6', '#6366F1'] as const, // mor → indigo
-  streak: ['#FB923C', '#EF4444'] as const, // turuncu → kırmızı (alev)
-  streakLost: ['#FCA5A5', '#F87171'] as const,
-  league: ['#FBBF24', '#F59E0B'] as const, // altın
-  success: ['#34D399', '#16A34A'] as const, // canlı yeşil
-  ocean: ['#22D3EE', '#3B82F6'] as const, // turkuaz → mavi
-  sunset: ['#F472B6', '#FB923C'] as const, // pembe → turuncu
-  grape: ['#A78BFA', '#7C3AED'] as const, // açık mor → mor
-  mint: ['#6EE7B7', '#10B981'] as const,
+  // Ana brand (eski indigo+mor → derin orman)
+  brand:      ['#16A34A', '#166534'] as const,  // canlı yeşil → derin orman
+  // XP — taze büyüme
+  xp:         ['#84CC16', '#65A30D'] as const,  // lime → moss
+  // Streak — sonbahar alevi (alev metaforu doğa içinde devam)
+  streak:     ['#F59E0B', '#B45309'] as const,  // amber → koyu turuncu
+  streakLost: ['#D6D3D1', '#A8A29E'] as const,  // gri (kuru dal)
+  // League — altın güneş (orman ışığı)
+  league:     ['#EAB308', '#A16207'] as const,
+  // Success — yaprak yeşili
+  success:    ['#22C55E', '#15803D'] as const,
+  // Ocean — orman gölü
+  ocean:      ['#06B6D4', '#0E7490'] as const,
+  // Sunset — toprak portakal (pembe yerine)
+  sunset:     ['#FB923C', '#C2410C'] as const,
+  // Grape eski mor → koyu moss
+  grape:      ['#84CC16', '#4D7C0F'] as const,
+  // Mint — taze çayır
+  mint:       ['#86EFAC', '#34D399'] as const,
+  // Yeni token'lar
+  forest:     ['#15803D', '#14532D'] as const,  // orman tonları
+  cedar:      ['#92400E', '#7C2D12'] as const,  // ahşap kahve
+  sky:        ['#7DD3FC', '#0EA5E9'] as const,  // açık gökyüzü
+  moss:       ['#4D7C0F', '#365314'] as const,  // yosun
+  earth:      ['#A16207', '#713F12'] as const,  // toprak altın
 } as const;
 
 export type GradientKey = keyof typeof gradients;
 
-/** Ders adına göre parlak gradyan; bilinmeyen ders deterministik bir renge düşer. */
+/**
+ * Ders adına göre doğa paletli gradyan; bilinmeyen ders deterministik bir renge düşer.
+ * Hiçbir mor/indigo yok — tüm dersler doğa içinde bir konum bulur.
+ */
 const subjectGradients: Record<string, readonly [string, string]> = {
-  matematik: gradients.ocean,
-  geometri: gradients.grape,
-  fizik: ['#60A5FA', '#4F46E5'],
-  kimya: gradients.mint,
-  biyoloji: gradients.success,
-  türkçe: gradients.sunset,
-  edebiyat: ['#F472B6', '#DB2777'],
-  tarih: ['#FBBF24', '#D97706'],
-  coğrafya: ['#34D399', '#059669'],
-  ingilizce: gradients.brand,
-  felsefe: gradients.grape,
-  din: ['#FCD34D', '#F59E0B'],
+  matematik:  gradients.ocean,    // matematik = derin göl
+  geometri:   gradients.sky,      // geometri = gökyüzü
+  fizik:      ['#0EA5E9', '#0369A1'],  // fizik = derin mavi
+  kimya:      gradients.mint,     // kimya = taze mint
+  biyoloji:   gradients.success,  // biyoloji = yaprak yeşili
+  türkçe:     gradients.sunset,   // türkçe = toprak portakal
+  edebiyat:   gradients.cedar,    // edebiyat = ahşap kahve
+  tarih:      gradients.earth,    // tarih = eski toprak altın
+  coğrafya:   gradients.forest,   // coğrafya = orman
+  ingilizce:  gradients.moss,     // ingilizce = yosun
+  felsefe:    ['#65A30D', '#3F6212'],  // felsefe = derin moss
+  din:        gradients.league,   // din = altın
 };
 
 const subjectFallback: readonly (readonly [string, string])[] = [
@@ -113,8 +134,10 @@ const subjectFallback: readonly (readonly [string, string])[] = [
   gradients.ocean,
   gradients.sunset,
   gradients.mint,
-  gradients.grape,
+  gradients.moss,
   gradients.league,
+  gradients.cedar,
+  gradients.earth,
 ];
 
 export function getSubjectGradient(subject?: string | null): readonly [string, string] {
@@ -131,32 +154,32 @@ export function getSubjectGradient(subject?: string | null): readonly [string, s
 export const shadows = {
   none: {},
   sm: {
-    shadowColor: '#0F172A',
+    shadowColor: '#14532D',  // orman gölgesi
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.07,
     shadowRadius: 6,
     elevation: 2,
   },
   md: {
-    shadowColor: '#0F172A',
+    shadowColor: '#14532D',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 14,
     elevation: 5,
   },
   lg: {
-    shadowColor: '#0F172A',
+    shadowColor: '#14532D',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.16,
+    shadowOpacity: 0.18,
     shadowRadius: 24,
     elevation: 10,
   },
   /** Accent renkli yumuşak parıltı — oyunlaştırılmış vurgular için. */
   glow: {
-    shadowColor: '#6366F1',
+    shadowColor: '#16A34A',  // yeşil glow (eski indigo)
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
     elevation: 8,
   },
 } as const;
@@ -165,14 +188,14 @@ export type ShadowKey = keyof typeof shadows;
 
 /** Tipografi ölçeği — tutarlı boyut/ağırlık/satır yüksekliği. */
 export const typography = {
-  display: { fontSize: 32, fontWeight: '800' as const, lineHeight: 38 },
-  h1: { fontSize: 26, fontWeight: '700' as const, lineHeight: 32 },
-  h2: { fontSize: 20, fontWeight: '700' as const, lineHeight: 26 },
-  h3: { fontSize: 17, fontWeight: '600' as const, lineHeight: 22 },
-  body: { fontSize: 15, fontWeight: '400' as const, lineHeight: 21 },
+  display:    { fontSize: 32, fontWeight: '800' as const, lineHeight: 38 },
+  h1:         { fontSize: 26, fontWeight: '700' as const, lineHeight: 32 },
+  h2:         { fontSize: 20, fontWeight: '700' as const, lineHeight: 26 },
+  h3:         { fontSize: 17, fontWeight: '600' as const, lineHeight: 22 },
+  body:       { fontSize: 15, fontWeight: '400' as const, lineHeight: 21 },
   bodyStrong: { fontSize: 15, fontWeight: '600' as const, lineHeight: 21 },
-  caption: { fontSize: 13, fontWeight: '400' as const, lineHeight: 18 },
-  tiny: { fontSize: 11, fontWeight: '500' as const, lineHeight: 14 },
+  caption:    { fontSize: 13, fontWeight: '400' as const, lineHeight: 18 },
+  tiny:       { fontSize: 11, fontWeight: '500' as const, lineHeight: 14 },
 } as const;
 
 export const radii = {

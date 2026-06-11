@@ -19,7 +19,7 @@ type Callbacks = {
   onContinue: (subject: string) => void;
   onProtectStreak: () => void;
   onCelebrateMilestone: () => void;
-  onFocusWeakTopic: (subTopic: string) => void;
+  onFocusWeakTopic: (subTopic: string, subject?: string) => void;
   onStartNewSubject: (subject: string) => void;
   onStartMockExam: (subject: string) => void;
   onDismiss: (id: string) => void;
@@ -40,8 +40,8 @@ export function FeedCard({ item, subjectLabel, callbacks }: Props) {
       return (
         <FeedCardBase
           icon={Target}
-          iconColor="#4F46E5"
-          iconBg="#EEF2FF"
+          iconColor="#15803D"
+          iconBg="#DCFCE7"
           category="Bugünkü hedef"
           title={`${subjectLabel(item.subject)} — ${item.progress}/${item.target} soru`}
           subtitle="Bugünün görevini tamamla, +XP kazan"
@@ -49,7 +49,7 @@ export function FeedCard({ item, subjectLabel, callbacks }: Props) {
           onPrimary={() => callbacks.onStartTodayGoal(item.subject)}
           onDismiss={dismiss}
         >
-          <AnimatedProgressBar value={ratio} height={6} fillColor="#6366F1" />
+          <AnimatedProgressBar value={ratio} height={6} fillColor="#16A34A" />
         </FeedCardBase>
       );
     }
@@ -81,8 +81,8 @@ export function FeedCard({ item, subjectLabel, callbacks }: Props) {
       return (
         <FeedCardBase
           icon={PlayCircle}
-          iconColor="#4F46E5"
-          iconBg="#EEF2FF"
+          iconColor="#15803D"
+          iconBg="#DCFCE7"
           category="Kaldığın yer"
           title={`${subjectLabel(item.subject)}${sub}`}
           subtitle={`Son aktivite ${minutesAgo} dk önce`}
@@ -138,7 +138,7 @@ export function FeedCard({ item, subjectLabel, callbacks }: Props) {
           subtitle={`${subjectLabel(item.subject)} · ${item.wrongCount} yanlış`}
           primaryLabel="Odak quiz aç"
           primaryColor="#DC2626"
-          onPrimary={() => callbacks.onFocusWeakTopic(item.subTopic)}
+          onPrimary={() => callbacks.onFocusWeakTopic(item.subTopic, item.subject)}
           onDismiss={dismiss}
         />
       );

@@ -35,14 +35,10 @@ export function WrongAnswerCoachSheet({
   const router = useRouter();
   const [hint, setHint] = useState<string>('');
   const [hintLoading, setHintLoading] = useState(false);
-  const [showExplanation, setShowExplanation] = useState(false);
   const fetchedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!visible) {
-      setShowExplanation(false);
-      return;
-    }
+    if (!visible) return;
     if (initialHint) {
       setHint(initialHint);
       return;
@@ -60,7 +56,7 @@ export function WrongAnswerCoachSheet({
   const handleAskCoach = () => {
     const ctx = JSON.stringify({ subject, questionText, options, grade });
     onClose();
-    router.push(`/(student)/chatbot?ctx=${encodeURIComponent(ctx)}` as never);
+    router.push(`/chatbot?ctx=${encodeURIComponent(ctx)}` as never);
   };
 
   const correctAnswerText = options[correctIndex];
@@ -107,41 +103,40 @@ export function WrongAnswerCoachSheet({
               )}
             </View>
 
-            {showExplanation ? (
-              <View className="mt-3 rounded-2xl border border-border-soft bg-bg-surface p-4">
-                <Text className="text-xs font-semibold uppercase text-success">Doğru Cevap</Text>
-                <View className="mt-2">
-                  <MathRenderer
-                    content={correctAnswerText ?? '—'}
-                    fontSize={14}
-                    color="#0F172A"
-                  />
+            {/* Doğru cevap her zaman görünür — buton kaldırıldı */}
+            <View className="mt-3 rounded-2xl border border-success/40 bg-success-soft/40 p-4">
+              <View className="flex-row items-center">
+                <View className="h-6 w-6 items-center justify-center rounded-full bg-success">
+                  <Text className="text-xs font-bold text-white">✓</Text>
                 </View>
-                {explanation ? (
-                  <>
-                    <Text className="mt-3 text-xs font-semibold uppercase text-text-muted">
-                      Açıklama
-                    </Text>
-                    <Text className="mt-1.5 text-sm leading-5 text-text-secondary">
-                      {explanation}
-                    </Text>
-                  </>
-                ) : null}
+                <Text className="ml-2 text-xs font-semibold uppercase tracking-wide text-success">
+                  Doğru Cevap
+                </Text>
               </View>
-            ) : (
-              <Pressable
-                onPress={() => setShowExplanation(true)}
-                className="mt-3 flex-row items-center justify-center rounded-2xl border border-border-soft py-3 active:bg-bg-elevated"
-              >
-                <Text className="text-sm font-medium text-text-secondary">Doğru cevabı göster</Text>
-              </Pressable>
-            )}
+              <View className="mt-2.5">
+                <MathRenderer
+                  content={correctAnswerText ?? '—'}
+                  fontSize={15}
+                  color="#0F172A"
+                />
+              </View>
+              {explanation ? (
+                <>
+                  <Text className="mt-3 text-xs font-semibold uppercase text-text-muted">
+                    Açıklama
+                  </Text>
+                  <Text className="mt-1.5 text-sm leading-5 text-text-secondary">
+                    {explanation}
+                  </Text>
+                </>
+              ) : null}
+            </View>
 
             <Pressable
               onPress={handleAskCoach}
               className="mt-3 flex-row items-center justify-center rounded-2xl bg-bg-surface border border-accent/40 py-3 active:opacity-80"
             >
-              <MessageCircle color="#6366F1" size={16} />
+              <MessageCircle color="#16A34A" size={16} />
               <Text className="ml-2 text-sm font-semibold text-accent-fg">Koça sor</Text>
             </Pressable>
           </ScrollView>

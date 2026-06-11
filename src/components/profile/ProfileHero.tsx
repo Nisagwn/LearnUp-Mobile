@@ -137,9 +137,9 @@ export function ProfileHero({
                 className="h-10 w-10 items-center justify-center rounded-full bg-white active:opacity-80"
               >
                 {saving ? (
-                  <ActivityIndicator color="#6366F1" size="small" />
+                  <ActivityIndicator color="#16A34A" size="small" />
                 ) : (
-                  <Check color="#6366F1" size={18} />
+                  <Check color="#16A34A" size={18} />
                 )}
               </Pressable>
             </View>

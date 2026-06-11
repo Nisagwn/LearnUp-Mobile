@@ -44,7 +44,7 @@ export function LearningPathHero({
   return (
     <View className="overflow-hidden rounded-3xl">
       <LinearGradient
-        colors={['#6366F1', '#8B5CF6']}
+        colors={['#16A34A', '#15803D']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ borderRadius: 24 }}
@@ -105,7 +105,7 @@ export function LearningPathHero({
                 className="flex-1 flex-row items-center justify-center rounded-xl bg-white py-2.5 active:opacity-80"
               >
                 <Text className="text-xs font-bold text-accent-fg">Devam Et</Text>
-                <ChevronRight color="#4F46E5" size={14} />
+                <ChevronRight color="#15803D" size={14} />
               </Pressable>
             ) : null}
             {onShuffle ? (

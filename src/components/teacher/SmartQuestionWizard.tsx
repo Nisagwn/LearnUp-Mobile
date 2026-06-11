@@ -41,7 +41,8 @@ function summarize(f: AssignmentFilters): string {
   parts.push(f.grades.length === 4 ? 'Tüm sınıflar' : `${f.grades.join(',')}. sınıf`);
   const diffMap = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', mixed: 'Karışık' } as const;
   parts.push(diffMap[f.difficulty]);
-  if (f.topic) parts.push(f.topic);
+  if (f.topics && f.topics.length > 0) parts.push(f.topics.join(', '));
+  else if (f.topic) parts.push(f.topic);
   parts.push(`${f.count} soru`);
   return parts.join(' · ');
 }
@@ -313,10 +314,12 @@ async function getSamplesForAI(filters: AssignmentFilters, picked: QuestionRow[]
       subject: subj.label,
       grade: String(grade),
       difficulty: diff,
-      topic: filters.topic,
+      topic: filters.topics?.[0] ?? filters.topic,
       subTopic: filters.subTopics?.[0],
       excludeIds: [],
       limit: 3,
+      // Few-shot örnekleri konuyla uyumlu olsun — katılık ayarına saygı duy.
+      strictTopic: filters.strict ?? true,
     });
   } catch {
     return [];

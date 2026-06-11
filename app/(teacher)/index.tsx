@@ -39,6 +39,9 @@ import {
   deleteAssignment,
   type TeacherAssignment,
 } from '@/services/assignmentsApi';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { NotificationSheet } from '@/components/notifications/NotificationSheet';
+import { subscribeUnreadCount } from '@/services/notificationsApi';
 
 const MAX_ACTIVE_ASSIGNMENTS = 3;
 
@@ -65,8 +68,18 @@ export default function TeacherDashboard() {
   const [assignmentsLoading, setAssignmentsLoading] = useState(true);
   const [submissionRate, setSubmissionRate] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [notifSheetOpen, setNotifSheetOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const uid = teacher?.uid ?? null;
+
+  useEffect(() => {
+    if (!uid) return;
+    const unsub = subscribeUnreadCount(uid, setUnreadCount);
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [uid]);
 
   // ── 1) Analitik + sınıf kodu (one-shot) ─────────────────────────────────
   const loadAnalytics = useCallback(async () => {
@@ -305,6 +318,13 @@ export default function TeacherDashboard() {
             classCode={classCode}
             codeLoading={codeLoading}
             onShareCode={handleShareCode}
+            rightSlot={
+              <NotificationBell
+                unreadCount={unreadCount}
+                onPress={() => setNotifSheetOpen(true)}
+                light
+              />
+            }
           />
         </Animated.View>
 
@@ -411,6 +431,12 @@ export default function TeacherDashboard() {
           </View>
         </Animated.View>
       </ScrollView>
+
+      <NotificationSheet
+        visible={notifSheetOpen}
+        uid={uid}
+        onClose={() => setNotifSheetOpen(false)}
+      />
     </SafeAreaView>
   );
 }

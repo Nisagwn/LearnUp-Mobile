@@ -23,7 +23,7 @@ export function StatTile({
   icon: Icon,
   label,
   value,
-  iconColor = '#6366F1',
+  iconColor = '#16A34A',
   className = '',
   animate = true,
   prefix = '',

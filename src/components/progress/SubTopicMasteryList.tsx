@@ -17,7 +17,7 @@ type Props = {
 function color(accuracy: number): string {
   if (accuracy >= 80) return '#16A34A';
   if (accuracy >= 50) return '#F59E0B';
-  return '#F472B6';
+  return '#FB923C';
 }
 
 export function SubTopicMasteryList({ items, onItemPress }: Props) {

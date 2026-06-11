@@ -12,7 +12,7 @@ const KIND_META: Record<StudyTaskKind, { icon: LucideIcon; color: string; soft: 
   srs: { icon: Repeat, color: '#F59E0B', soft: '#FEF3C7' },
   weak: { icon: Target, color: '#DC2626', soft: '#FEE2E2' },
   momentum: { icon: TrendingUp, color: '#16A34A', soft: '#DCFCE7' },
-  start: { icon: Sparkles, color: '#6366F1', soft: '#EEF2FF' },
+  start: { icon: Sparkles, color: '#16A34A', soft: '#DCFCE7' },
 };
 
 export function StudyPlanCard({ tasks, onTaskPress }: Props) {

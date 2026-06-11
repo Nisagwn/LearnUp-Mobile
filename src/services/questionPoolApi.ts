@@ -6,8 +6,10 @@ import {
   startAt,
   limit as firestoreLimit,
   getDocs,
+  doc,
+  writeBatch,
+  serverTimestamp,
   QueryConstraint,
-  DocumentData,
 } from 'firebase/firestore';
 import { auth, db } from '@/services/firebase';
 import { shuffle } from '@/utils/shuffle';
@@ -38,6 +40,13 @@ export interface PoolFetchParams {
   subTopic?: string;
   excludeIds: string[];
   limit: number;
+  /**
+   * true ise ve topic/subTopic verilmişse, 3. kademe (konu filtresini düşürüp
+   * dersin rastgele sorularını ekleyen) fallback ÇALIŞMAZ. Ödev atamada öğretmen
+   * belirli bir konu istediğinde konu-dışı soru gelmesini önler. Öğrenci genel
+   * ders quiz'i bu fallback'e ihtiyaç duyduğu için varsayılan false.
+   */
+  strictTopic?: boolean;
 }
 
 interface QuestionDocShape {
@@ -187,8 +196,11 @@ export async function fetchQuestionPool(p: PoolFetchParams): Promise<PoolQuestio
     }
   }
 
-  // 3) Sadece kategori+sınıf+zorluk
-  if (collected.length < p.limit) {
+  // 3) Sadece kategori+sınıf+zorluk (konu filtresi düşer).
+  //    strictTopic + konu/alt-konu istenmişse ATLA — konu-dışı soru sızmasın.
+  const topicRequested = !!(p.topic || p.subTopic);
+  const skipFallback = p.strictTopic && topicRequested;
+  if (collected.length < p.limit && !skipFallback) {
     const fallback = await runTier(baseFilters, randomSeed, overFetch);
     const seen = new Set(collected.map((c) => c.id));
     for (const q of fallback) {
@@ -270,6 +282,9 @@ export async function persistAIQuestions(
         options: q.choices,
         correct_answer: q.choices[q.answer],
         explanation: q.hint || '',
+        qualityScore: typeof q.qualityScore === 'number' ? q.qualityScore : null,
+        topic: typeof q.topic === 'string' && q.topic.trim() ? q.topic.trim() : null,
+        sub_topic: typeof q.subTopic === 'string' && q.subTopic.trim() ? q.subTopic.trim() : null,
       })),
       subject: meta.subject,
       topic: meta.topic || '',
@@ -298,6 +313,30 @@ export async function persistAIQuestions(
   } catch (err) {
     console.warn('[persistAIQuestions] failed:', (err as Error).message);
     return { savedIds: [] };
+  }
+}
+
+/**
+ * Verilen soru id'lerini öğretmen onayıyla `verified:true` yapar (batch).
+ * Ödev yayınlanmadan önce öğretmenin incelediği onaysız (AI) soruları onaylamak
+ * için kullanılır — böylece öğrenciye yalnız onaylı sorular gider.
+ * Firestore en fazla 500 yazımı tek batch'te destekler; daha fazlası parçalanır.
+ */
+export async function approveQuestions(ids: string[]): Promise<void> {
+  const unique = Array.from(new Set(ids.filter(Boolean)));
+  if (unique.length === 0) return;
+  const uid = auth.currentUser?.uid ?? null;
+  const CHUNK = 450;
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    for (const id of unique.slice(i, i + CHUNK)) {
+      batch.update(doc(db, 'questions', id), {
+        verified: true,
+        approvedBy: uid,
+        approvedAt: serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
 }
 

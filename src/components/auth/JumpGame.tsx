@@ -21,8 +21,8 @@ import { PressableScale } from '@/components/common/PressableScale';
 import { AnimatedNumber } from '@/components/common/AnimatedNumber';
 import { lottie } from '@/constants/lottie';
 import { JumpCharacter } from './JumpCharacter';
-import { JumpGem } from './JumpGem';
-import { JumpObstacle } from './JumpObstacle';
+import { JumpGem, type GemItem } from './JumpGem';
+import { JumpObstacle, type ObsItem } from './JumpObstacle';
 
 const BEST_KEY = '@game/jump_best';
 const TIP_SEEN_KEY = '@game/jump_seenTip';
@@ -79,9 +79,10 @@ export function JumpGame() {
   const [showTip, setShowTip] = useState(false);
   const [newRecord, setNewRecord] = useState(false);
 
-  const [birdY, setBirdY] = useState(HEIGHT / 2);
-  const [obstacles, setObstacles] = useState<Obstacle[]>([]);
-  const [gems, setGems] = useState<Gem[]>([]);
+  // Yapısal listeler — sadece engel/gem eklenip silinince güncellenir (render tetikler).
+  // Konum/opacity her karede shared value ile sürülür; React'i meşgul etmez.
+  const [obsList, setObsList] = useState<{ id: number; gapY: number }[]>([]);
+  const [gemList, setGemList] = useState<{ id: number; y: number }[]>([]);
 
   const birdYRef = useRef(HEIGHT / 2);
   const birdVRef = useRef(0);
@@ -95,6 +96,15 @@ export function JumpGame() {
   const lastRef = useRef(0);
   const stateRef = useRef<State>('idle');
   const confettiRef = useRef<ConfettiCannon | null>(null);
+  // Yapısal değişimi (id seti) ucuzca yakalamak için imza referansları
+  const obsSigRef = useRef('');
+  const gemSigRef = useRef('');
+
+  // Hareket sürücüleri — döngü JS thread'inden yazar, çocuklar UI thread'inde okur
+  const birdSY = useSharedValue(HEIGHT / 2);
+  const birdTilt = useSharedValue(0);
+  const obsSV = useSharedValue<ObsItem[]>([]);
+  const gemSV = useSharedValue<GemItem[]>([]);
 
   const scorePulse = useSharedValue(1);
   const cloud1X = useSharedValue(0);
@@ -263,9 +273,28 @@ export function JumpGame() {
       }
 
       obsRef.current = obs;
-      setObstacles(obs.map((o) => ({ id: o.id, x: o.x, gapY: o.gapY, scored: o.scored })));
-      setGems(nextGems.map((g) => ({ ...g })));
-      setBirdY(birdYRef.current);
+
+      // Görseli shared value'lara yaz — kare-başına React render yok.
+      birdSY.value = birdYRef.current;
+      birdTilt.value = Math.max(-0.4, Math.min(0.6, birdVRef.current / 600));
+      obsSV.value = obs.map((o) => ({ id: o.id, x: o.x, gapY: o.gapY }));
+      gemSV.value = nextGems.map((g) => ({
+        id: g.id,
+        x: g.x,
+        opacity: g.collected ? g.opacity : 1,
+      }));
+
+      // Yapısal (id seti) değişimini yakala → yalnız o an React listesini güncelle.
+      const obsSig = obs.map((o) => o.id).join(',');
+      if (obsSig !== obsSigRef.current) {
+        obsSigRef.current = obsSig;
+        setObsList(obs.map((o) => ({ id: o.id, gapY: o.gapY })));
+      }
+      const gemSig = nextGems.map((g) => g.id).join(',');
+      if (gemSig !== gemSigRef.current) {
+        gemSigRef.current = gemSig;
+        setGemList(nextGems.map((g) => ({ id: g.id, y: g.y })));
+      }
 
       if (dead) {
         endGame();
@@ -273,7 +302,7 @@ export function JumpGame() {
       }
       rafRef.current = requestAnimationFrame(loop);
     },
-    [endGame, randGapY, triggerScorePulse],
+    [endGame, randGapY, triggerScorePulse, birdSY, birdTilt, obsSV, gemSV],
   );
 
   const start = useCallback(() => {
@@ -285,10 +314,15 @@ export function JumpGame() {
     idRef.current = 0;
     gemIdRef.current = 0;
     lastRef.current = 0;
+    obsSigRef.current = '';
+    gemSigRef.current = '';
     setScore(0);
-    setObstacles([]);
-    setGems([]);
-    setBirdY(HEIGHT / 2);
+    setObsList([]);
+    setGemList([]);
+    birdSY.value = HEIGHT / 2;
+    birdTilt.value = 0;
+    obsSV.value = [];
+    gemSV.value = [];
     setNewRecord(false);
     stateRef.current = 'playing';
     setState('playing');
@@ -299,7 +333,7 @@ export function JumpGame() {
       AsyncStorage.setItem(TIP_SEEN_KEY, '1').catch(() => {});
     }
     rafRef.current = requestAnimationFrame(loop);
-  }, [loop, showTip]);
+  }, [loop, showTip, birdSY, birdTilt, obsSV, gemSV]);
 
   const flap = useCallback(() => {
     if (stateRef.current !== 'playing') return;
@@ -313,8 +347,6 @@ export function JumpGame() {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
-
-  const tilt = Math.max(-0.4, Math.min(0.6, birdVRef.current / 600));
 
   const scoreAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scorePulse.value }],
@@ -476,12 +508,13 @@ export function JumpGame() {
             </Svg>
           </View>
 
-          {/* Engeller — pastel mint */}
-          {obstacles.map((o) => (
+          {/* Engeller — pastel mint (konum shared value'den) */}
+          {obsList.map((o) => (
             <JumpObstacle
               key={o.id}
-              x={o.x}
+              id={o.id}
               gapY={o.gapY}
+              obsSV={obsSV}
               containerHeight={HEIGHT}
               gap={GAP}
               width={OBS_W}
@@ -490,13 +523,26 @@ export function JumpGame() {
             />
           ))}
 
-          {/* Gem'ler */}
-          {gems.map((g) => (
-            <JumpGem key={g.id} x={g.x} y={g.y} opacity={g.opacity} />
+          {/* Gem'ler (konum + fade shared value'den) */}
+          {gemList.map((g) => (
+            <JumpGem
+              key={g.id}
+              id={g.id}
+              y={g.y}
+              gemSV={gemSV}
+              fill={colors.warning}
+              stroke={colors.white}
+            />
           ))}
 
-          {/* Karakter */}
-          <JumpCharacter x={BIRD_X} y={birdY} size={BIRD + 4} tilt={tilt} jumpTick={jumpTick} />
+          {/* Karakter (konum + tilt shared value'den) */}
+          <JumpCharacter
+            x={BIRD_X}
+            ySV={birdSY}
+            tiltSV={birdTilt}
+            size={BIRD + 4}
+            jumpTick={jumpTick}
+          />
 
           {/* Skor */}
           {state === 'playing' ? (
@@ -683,7 +729,7 @@ export function JumpGame() {
           origin={{ x: width / 2, y: 0 }}
           autoStart={false}
           fadeOut
-          colors={isDark ? ['#A5B4FC', '#F472B6', '#FBBF24', '#34D399'] : ['#6366F1', '#EC4899', '#F59E0B', '#10B981']}
+          colors={isDark ? ['#86EFAC', '#FB923C', '#FBBF24', '#34D399'] : ['#16A34A', '#EC4899', '#F59E0B', '#10B981']}
         />
       ) : null}
     </View>

@@ -21,7 +21,7 @@ export function ChatFAB() {
       onPressOut={() => {
         scale.value = withSpring(1, { damping: 12 });
       }}
-      onPress={() => router.push('/(student)/chatbot')}
+      onPress={() => router.push('/chatbot' as never)}
       style={[
         animatedStyle,
         {
@@ -31,10 +31,10 @@ export function ChatFAB() {
           height: 56,
           width: 56,
           borderRadius: 28,
-          backgroundColor: '#6366F1',
+          backgroundColor: '#16A34A',
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: '#6366F1',
+          shadowColor: '#16A34A',
           shadowOpacity: 0.35,
           shadowOffset: { width: 0, height: 6 },
           shadowRadius: 12,

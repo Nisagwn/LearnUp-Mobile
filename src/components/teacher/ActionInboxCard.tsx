@@ -43,7 +43,7 @@ const TONE_CLASSES: Record<Tone, { bg: string; border: string; chipBg: string; i
 const TONE_ICON_COLOR: Record<Tone, string> = {
   warning: '#D97706',
   danger: '#DC2626',
-  accent: '#6366F1',
+  accent: '#16A34A',
   success: '#16A34A',
 };
 

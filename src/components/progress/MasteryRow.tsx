@@ -17,7 +17,7 @@ type Props = {
 function masteryColor(score: number): string {
   if (score >= 80) return '#16A34A';
   if (score >= 50) return '#F59E0B';
-  return '#F472B6';
+  return '#FB923C';
 }
 
 function TrendBadge({ trend }: { trend?: Trend }) {

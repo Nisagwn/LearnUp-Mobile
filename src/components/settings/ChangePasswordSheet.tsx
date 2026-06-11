@@ -82,7 +82,7 @@ export function ChangePasswordSheet({ visible, onClose }: Props) {
               <View className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border-soft" />
               <View className="flex-row items-center">
                 <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-soft">
-                  <KeyRound color="#6366F1" size={18} />
+                  <KeyRound color="#16A34A" size={18} />
                 </View>
                 <Text className="ml-3 flex-1 text-base font-semibold text-text-primary">
                   Şifre Değiştir

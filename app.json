@@ -14,11 +14,11 @@
     },
     "android": {
       "package": "com.learnup.mobile",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#0f172a",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundImage": "./assets/images/android-icon-background.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -40,11 +40,24 @@
             "backgroundColor": "#0f172a"
           }
         }
+      ],
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "color": "#86EFAC"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bceed329-0a6e-4270-9408-9745d7e35a55"
+      }
     }
   }
 }

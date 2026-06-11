@@ -292,7 +292,7 @@ export function TargetedAssignSheet({
                       : 'border-border-soft bg-bg-surface'
                   }`}
                 >
-                  <Sparkles color="#4F46E5" size={16} />
+                  <Sparkles color="#15803D" size={16} />
                   <View className="ml-3 flex-1">
                     <Text className="text-sm font-semibold text-text-primary">AI ile üret</Text>
                     <Text className="text-[11px] text-text-muted">

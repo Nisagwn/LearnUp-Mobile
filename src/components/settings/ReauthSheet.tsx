@@ -77,7 +77,7 @@ export function ReauthSheet({
               <View className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border-soft" />
               <View className="flex-row items-center">
                 <View className={`h-10 w-10 items-center justify-center rounded-2xl ${destructive ? 'bg-danger-soft' : 'bg-accent-soft'}`}>
-                  <ShieldCheck color={destructive ? '#DC2626' : '#6366F1'} size={18} />
+                  <ShieldCheck color={destructive ? '#DC2626' : '#16A34A'} size={18} />
                 </View>
                 <Text className="ml-3 flex-1 text-base font-semibold text-text-primary">{title}</Text>
                 <Pressable onPress={onClose} hitSlop={10} className="h-8 w-8 items-center justify-center rounded-full bg-bg-elevated active:opacity-70">

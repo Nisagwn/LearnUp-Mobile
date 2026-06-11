@@ -60,8 +60,8 @@ export function TeacherImpactCard({
     <View className="rounded-2xl border border-border-soft bg-bg-surface p-4" style={{ gap: 14 }}>
       <Row
         icon={Sparkles}
-        iconColor="#6366F1"
-        bgColor="#EEF2FF"
+        iconColor="#16A34A"
+        bgColor="#DCFCE7"
         label="Üretilen Soru"
         value={questionsCreated}
         loading={loading}

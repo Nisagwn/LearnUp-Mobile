@@ -50,8 +50,8 @@ export function QuickActionGrid({
         <ActionCard
           icon={Sparkles}
           label="Soru Üret"
-          color="#6366F1"
-          bg="#EEF2FF"
+          color="#16A34A"
+          bg="#DCFCE7"
           onPress={onGenerateQuestion}
         />
         <ActionCard

@@ -4,6 +4,7 @@ import { doc, collection, query, where, onSnapshot, getDocs } from 'firebase/fir
 import { ensureDailyState } from '@/services/gamificationApi';
 import { registerForPushNotifications } from '@/services/pushService';
 import { subscribeSRSCards } from '@/services/srsApi';
+import { subscribeInventory, subscribeGardenPlants } from '@/services/gardenApi';
 import { categorize as srsCategorize } from '@/utils/srs';
 
 export const UserStatsContext = createContext();
@@ -50,6 +51,8 @@ export function UserStatsProvider({ children }) {
     timeSpentTodayMs: 0,
   });
   const [srsCards, setSrsCards] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [gardenPlants, setGardenPlants] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [dailyActivity, setDailyActivity] = useState([]);
@@ -286,23 +289,35 @@ export function UserStatsProvider({ children }) {
   }, [calculateStreak]);
 
   // ── Sınıf sıralaması: aynı teacherId'ye sahip tüm öğrencilerin net skoruna göre ──
-  const loadClassRanking = useCallback(async (uid, teacherId) => {
+  const loadClassRanking = useCallback(async (uid, teacherId, opts = {}) => {
+    const setShared = opts.setShared !== false;
     if (!teacherId) {
-      setClassRanking({ rank: null, total: null, list: [], loading: false });
-      return;
+      const r = { rank: null, total: null, list: [], loading: false };
+      if (setShared) setClassRanking(r);
+      return r;
     }
     try {
-      // Aynı sınıftaki tüm öğrencileri bul
-      const studentsSnap = await getDocs(
+      // Aynı sınıftaki tüm öğrencileri bul.
+      // Q1: legacy/aktif birincil sınıf (teacherId == X)
+      // Q2: çoklu-sınıf üyeleri (teacherIds array-contains X) — composite index gerektirir;
+      //     index henüz deploy edilmemişse sessizce atlanır (Q1 ile geriye düşer).
+      const q1 = getDocs(
         query(collection(db, 'users'), where('teacherId', '==', teacherId), where('role', '==', 'student'))
       );
+      const q2 = getDocs(
+        query(collection(db, 'users'), where('teacherIds', 'array-contains', teacherId), where('role', '==', 'student'))
+      ).catch(() => null);
+      const [snap1, snap2] = await Promise.all([q1, q2]);
 
-      const students = [];
-      studentsSnap.forEach(d => students.push({ uid: d.id, ...d.data() }));
+      const byUid = new Map();
+      snap1.forEach(d => byUid.set(d.id, { uid: d.id, ...d.data() }));
+      if (snap2) snap2.forEach(d => { if (!byUid.has(d.id)) byUid.set(d.id, { uid: d.id, ...d.data() }); });
+      const students = Array.from(byUid.values());
 
       if (students.length === 0) {
-        setClassRanking({ rank: null, total: 0, list: [], loading: false });
-        return;
+        const r = { rank: null, total: 0, list: [], loading: false };
+        if (setShared) setClassRanking(r);
+        return r;
       }
 
       // Her öğrencinin loglarını çek ve net hesapla
@@ -328,10 +343,14 @@ export function UserStatsProvider({ children }) {
       rankData.sort((a, b) => b.net !== a.net ? b.net - a.net : b.correct - a.correct);
 
       const rank = rankData.findIndex(s => s.uid === uid) + 1;
-      setClassRanking({ rank, total: rankData.length, list: rankData, loading: false });
+      const r = { rank, total: rankData.length, list: rankData, loading: false };
+      if (setShared) setClassRanking(r);
+      return r;
     } catch (err) {
       console.warn('Sınıf sıralaması yüklenemedi:', err);
-      setClassRanking({ rank: null, total: null, list: [], loading: false });
+      const r = { rank: null, total: null, list: [], loading: false };
+      if (setShared) setClassRanking(r);
+      return r;
     }
   }, []);
 
@@ -425,6 +444,16 @@ export function UserStatsProvider({ children }) {
     // SRS kartları — yanlışlarım sekmesi ve smart feed "tekrar zamanı" için
     const unsubSrs = subscribeSRSCards((cards) => setSrsCards(cards));
     if (unsubSrs) unsubscribeRefs.current.srs = unsubSrs;
+
+    // ORMAN OYUNU: inventory + bitki sub-collection'ları real-time
+    try {
+      const unsubInv = subscribeInventory(uid, (items) => setInventory(items));
+      unsubscribeRefs.current.inventory = unsubInv;
+    } catch { /* sessiz */ }
+    try {
+      const unsubGarden = subscribeGardenPlants(uid, (plants) => setGardenPlants(plants));
+      unsubscribeRefs.current.garden = unsubGarden;
+    } catch { /* sessiz */ }
   }, [calculateStatsFromAnswers, calculateWeeklyAndMonthly, calculateDailyActivity, calculateEnrichments, loadClassRanking]);
 
   useEffect(() => {
@@ -447,6 +476,8 @@ export function UserStatsProvider({ children }) {
         setAvgSecondsPerSubject({});
         setTodayBriefBase({ solvedToday: 0, correctToday: 0, timeSpentTodayMs: 0 });
         setSrsCards([]);
+        setInventory([]);
+        setGardenPlants([]);
         setDailyActivity([]);
         setAnswersLog([]);
         setClassRanking({ rank: null, total: null, list: [], loading: false });
@@ -526,6 +557,8 @@ export function UserStatsProvider({ children }) {
     subjectTrends, weakSubTopicBySubject, avgSecondsPerSubject, todayBrief,
     srsCards, srsDueCount,
     weeklyData, monthlyData, dailyActivity, answersLog, classRanking, loading, error,
+    inventory, gardenPlants,
+    loadClassRanking,
   };
 
   return <UserStatsContext.Provider value={value}>{children}</UserStatsContext.Provider>;

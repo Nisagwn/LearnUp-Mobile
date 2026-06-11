@@ -19,7 +19,7 @@ export function AnimatedProgressBar({
   value,
   height = 6,
   trackClassName = 'bg-bg-elevated',
-  fillColor = '#6366F1',
+  fillColor = '#16A34A',
   durationMs = 700,
 }: Props) {
   const clamped = Math.min(1, Math.max(0, value));

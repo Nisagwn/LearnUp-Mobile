@@ -21,7 +21,7 @@ export function ClassAnalyticsCard({
   return (
     <View style={{ gap: 12 }}>
       <View className="flex-row" style={{ gap: 12 }}>
-        <StatTile icon={Users} label="Öğrenci" value={studentCount} iconColor="#6366F1" />
+        <StatTile icon={Users} label="Öğrenci" value={studentCount} iconColor="#16A34A" />
         <StatTile icon={UserCheck} label="Aktif (7g)" value={activeStudents} iconColor="#16A34A" />
       </View>
       <View className="flex-row" style={{ gap: 12 }}>

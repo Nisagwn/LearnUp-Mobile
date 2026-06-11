@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { ChevronLeft, Megaphone, Plus, Trash2, X, Check } from 'lucide-react-nat
 import { auth } from '@/services/firebase';
 import { Card } from '@/components/common/Card';
 import { EmptyState } from '@/components/common/EmptyState';
+import { UserStatsContext } from '@/contexts/UserStatsContext';
 import {
   subscribeTeacherAnnouncements,
   createAnnouncement,
@@ -31,6 +32,12 @@ function formatDate(ms: number): string {
 
 export default function TeacherAnnouncements() {
   const router = useRouter();
+  const ctx = useContext(UserStatsContext);
+  const teacherName: string =
+    (ctx?.userProfile?.name as string) ||
+    auth.currentUser?.displayName ||
+    auth.currentUser?.email?.split('@')[0] ||
+    'Öğretmen';
   const [items, setItems] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [composeOpen, setComposeOpen] = useState(false);
@@ -68,7 +75,7 @@ export default function TeacherAnnouncements() {
     }
     setSaving(true);
     try {
-      await createAnnouncement(uid, { title, content });
+      await createAnnouncement(uid, teacherName, { title, content });
       setComposeOpen(false);
     } catch (err) {
       Alert.alert('Hata', (err as Error).message);

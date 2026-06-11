@@ -1,13 +1,13 @@
 import { useContext, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Switch, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, Pressable, Switch, Alert, Linking, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SettingsBackground } from '@/components/settings/SettingsBackground';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import {
   ChevronLeft,
   UserCog,
   KeyRound,
-  Mail,
   Bell,
   Sun,
   Moon,
@@ -20,11 +20,11 @@ import {
   Trash2,
   Check,
 } from 'lucide-react-native';
-import { signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { UserStatsContext } from '@/contexts/UserStatsContext';
 import { useTheme, type ThemeMode } from '@/contexts/ThemeContext';
-import { setPushEnabled, sendTestPush } from '@/services/pushService';
+import { setPushEnabled } from '@/services/pushService';
 import { deleteAccount } from '@/services/accountApi';
 import { PRIVACY_URL, TERMS_URL, SUPPORT_EMAIL } from '@/constants/links';
 import { SettingsSection } from '@/components/settings/SettingsSection';
@@ -41,6 +41,7 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string; icon: typeof Sun }[] = [
 
 export default function StudentSettings() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
   const ctx = useContext(UserStatsContext);
   const profile = ctx?.userProfile;
   const { mode, setMode } = useTheme();
@@ -60,39 +61,6 @@ export default function StudentSettings() {
       setNotif(!val);
       Alert.alert('Hata', (err as Error).message);
     }
-  };
-
-  const onTestPush = async () => {
-    try {
-      const r = await sendTestPush();
-      Alert.alert(
-        'Test Bildirimi',
-        r.sent > 0
-          ? 'Bildirim gönderildi. Cihazına gelmesini bekle (5-10 sn).'
-          : 'Token bulunamadı veya gönderim başarısız. Bildirimleri açık ve uygulamayı bir kez yeniden başlattığından emin ol.',
-      );
-    } catch (err) {
-      Alert.alert('Hata', (err as Error).message);
-    }
-  };
-
-  const onResetPassword = () => {
-    const email = auth.currentUser?.email;
-    if (!email) return;
-    Alert.alert('Şifre Sıfırlama', `${email} adresine sıfırlama bağlantısı gönderilsin mi?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Gönder',
-        onPress: async () => {
-          try {
-            await sendPasswordResetEmail(auth, email);
-            Alert.alert('Gönderildi', 'E-postandaki bağlantıyla şifreni sıfırlayabilirsin.');
-          } catch (err) {
-            Alert.alert('Hata', (err as Error).message);
-          }
-        },
-      },
-    ]);
   };
 
   const onLogout = () => {
@@ -120,7 +88,8 @@ export default function StudentSettings() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-base" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-bg-surface" edges={['top']}>
+      <SettingsBackground width={width} height={height} />
       <View className="flex-row items-center px-5 pt-2">
         <Pressable onPress={() => router.back()} hitSlop={8} className="mr-3 active:opacity-60">
           <ChevronLeft color="#94A3B8" size={26} />
@@ -132,7 +101,6 @@ export default function StudentSettings() {
         <SettingsSection title="Hesap">
           <SettingsRow icon={UserCog} label="Profili Düzenle" sublabel="Ad, fotoğraf, sınıf" first showChevron onPress={() => setEditOpen(true)} />
           <SettingsRow icon={KeyRound} label="Şifre Değiştir" showChevron onPress={() => setPwOpen(true)} />
-          <SettingsRow icon={Mail} label="Şifre Sıfırlama E-postası" showChevron onPress={onResetPassword} />
         </SettingsSection>
 
         <SettingsSection title="Bildirimler">
@@ -142,13 +110,6 @@ export default function StudentSettings() {
             sublabel="Seri ve günlük görev hatırlatmaları"
             first
             right={<Switch value={notif} onValueChange={onToggleNotif} />}
-          />
-          <SettingsRow
-            icon={Bell}
-            label="Test Bildirimi Gönder"
-            sublabel="Kendine bir test push at"
-            showChevron
-            onPress={onTestPush}
           />
         </SettingsSection>
 

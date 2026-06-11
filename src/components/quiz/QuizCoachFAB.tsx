@@ -22,7 +22,7 @@ export function QuizCoachFAB({ subject, questionText, options, grade }: Props) {
 
   const handlePress = () => {
     const ctx = JSON.stringify({ subject, questionText, options, grade });
-    router.push(`/(student)/chatbot?ctx=${encodeURIComponent(ctx)}` as never);
+    router.push(`/chatbot?ctx=${encodeURIComponent(ctx)}` as never);
   };
 
   return (

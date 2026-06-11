@@ -1,7 +1,7 @@
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Info, X, Sparkles, RefreshCw, Plus } from 'lucide-react-native';
 import { Card } from '@/components/common/Card';
-import { MathRenderer } from '@/components/quiz/MathRenderer';
+import { latexToPlainText } from '@/utils/latex';
 import type { QuestionRow } from '@/components/teacher/QuestionPickerSheet';
 
 type Props = {
@@ -60,17 +60,22 @@ export function AssignmentPreviewList({
                         <Text className="text-[9px] font-semibold text-accent-fg">AI</Text>
                       </View>
                     ) : null}
+                    {q.verified === false ? (
+                      <View className="ml-1.5 rounded-full bg-warning-soft px-1.5 py-0.5">
+                        <Text className="text-[9px] font-semibold text-warning">Onay bekliyor</Text>
+                      </View>
+                    ) : null}
                   </View>
-                  <View className="mt-1.5">
-                    <MathRenderer content={q.text} fontSize={13} color="#0F172A" />
-                  </View>
+                  <Text className="mt-1.5 text-sm leading-5 text-text-primary" numberOfLines={3}>
+                    {latexToPlainText(q.text)}
+                  </Text>
                 </View>
                 <Pressable
                   onPress={() => onOpenDetail(q.id)}
                   hitSlop={6}
                   className="ml-2 p-1 active:opacity-60"
                 >
-                  <Info color="#4F46E5" size={15} />
+                  <Info color="#15803D" size={15} />
                 </Pressable>
                 <Pressable
                   onPress={() => onRemove(q.id)}
@@ -105,7 +110,7 @@ export function AssignmentPreviewList({
           busy={busy === 'add'}
         />
         <ActionPill
-          icon={<Sparkles color="#4F46E5" size={14} />}
+          icon={<Sparkles color="#15803D" size={14} />}
           label="+5 AI Üret"
           onPress={onAddAI}
           busy={busy === 'ai'}
@@ -154,7 +159,7 @@ function ActionPill({
       } ${busy ? 'opacity-60' : ''}`}
     >
       {busy ? (
-        <ActivityIndicator color={accent ? '#4F46E5' : '#475569'} size="small" />
+        <ActivityIndicator color={accent ? '#15803D' : '#475569'} size="small" />
       ) : (
         icon
       )}

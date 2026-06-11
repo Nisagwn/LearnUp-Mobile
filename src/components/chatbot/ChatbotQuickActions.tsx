@@ -9,7 +9,7 @@ type Props = {
 
 const CHIPS: { id: QuickAction; label: string; icon: typeof Swords; color: string }[] = [
   { id: 'duel', label: 'Düello', icon: Swords, color: '#DC2626' },
-  { id: 'summary', label: 'Özet', icon: FileText, color: '#6366F1' },
+  { id: 'summary', label: 'Özet', icon: FileText, color: '#16A34A' },
   { id: 'weak', label: 'Zayıf Konum', icon: Target, color: '#D97706' },
 ];
 

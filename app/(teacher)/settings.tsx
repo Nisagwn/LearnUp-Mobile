@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   UserCog,
   KeyRound,
-  Mail,
   Bell,
   ClipboardCheck,
   FilePlus2,
@@ -22,12 +21,12 @@ import {
   Trash2,
   Check,
 } from 'lucide-react-native';
-import { signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/services/firebase';
 import { UserStatsContext } from '@/contexts/UserStatsContext';
 import { useTheme, type ThemeMode } from '@/contexts/ThemeContext';
-import { setPushEnabled, sendTestPush } from '@/services/pushService';
+import { setPushEnabled } from '@/services/pushService';
 import { deleteAccount } from '@/services/accountApi';
 import { PRIVACY_URL, TERMS_URL, SUPPORT_EMAIL } from '@/constants/links';
 import { SettingsSection } from '@/components/settings/SettingsSection';
@@ -81,39 +80,6 @@ export default function TeacherSettings() {
     }
   };
 
-  const onTestPush = async () => {
-    try {
-      const r = await sendTestPush();
-      Alert.alert(
-        'Test Bildirimi',
-        r.sent > 0
-          ? 'Bildirim gönderildi. Cihazına gelmesini bekle (5-10 sn).'
-          : 'Token bulunamadı veya gönderim başarısız. Bildirimleri açık ve uygulamayı bir kez yeniden başlattığından emin ol.',
-      );
-    } catch (err) {
-      Alert.alert('Hata', (err as Error).message);
-    }
-  };
-
-  const onResetPassword = () => {
-    const email = auth.currentUser?.email;
-    if (!email) return;
-    Alert.alert('Şifre Sıfırlama', `${email} adresine sıfırlama bağlantısı gönderilsin mi?`, [
-      { text: 'Vazgeç', style: 'cancel' },
-      {
-        text: 'Gönder',
-        onPress: async () => {
-          try {
-            await sendPasswordResetEmail(auth, email);
-            Alert.alert('Gönderildi', 'E-postandaki bağlantıyla şifreni sıfırlayabilirsin.');
-          } catch (err) {
-            Alert.alert('Hata', (err as Error).message);
-          }
-        },
-      },
-    ]);
-  };
-
   const onLogout = () => {
     Alert.alert('Çıkış Yap', 'Hesabından çıkmak istediğine emin misin?', [
       { text: 'Vazgeç', style: 'cancel' },
@@ -151,7 +117,6 @@ export default function TeacherSettings() {
         <SettingsSection title="Hesap">
           <SettingsRow icon={UserCog} label="Profili Düzenle" sublabel="Ad, fotoğraf, branş" first showChevron onPress={() => setEditOpen(true)} />
           <SettingsRow icon={KeyRound} label="Şifre Değiştir" showChevron onPress={() => setPwOpen(true)} />
-          <SettingsRow icon={Mail} label="Şifre Sıfırlama E-postası" showChevron onPress={onResetPassword} />
         </SettingsSection>
 
         <SettingsSection title="Bildirimler">
@@ -188,13 +153,6 @@ export default function TeacherSettings() {
                 }}
               />
             }
-          />
-          <SettingsRow
-            icon={Bell}
-            label="Test Bildirimi Gönder"
-            sublabel="Kendine bir test push at"
-            showChevron
-            onPress={onTestPush}
           />
         </SettingsSection>
 

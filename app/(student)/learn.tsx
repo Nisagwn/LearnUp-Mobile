@@ -7,9 +7,11 @@ import {
   ActivityIndicator,
   FlatList,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LearnBackground } from '@/components/learn/LearnBackground';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import {
   ChevronRight,
@@ -150,6 +152,7 @@ type FilterId = 'all' | 'wrong' | 'bookmarks' | 'recommended';
 
 export default function Learn() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
   const ctx = useContext(UserStatsContext);
   const { xpGain, subject: highlightSubject } = useLocalSearchParams<{
     xpGain?: string;
@@ -318,13 +321,16 @@ export default function Learn() {
     }
   };
 
-  const handleFocusTopicQuiz = async (subTopic: string) => {
+  const handleFocusTopicQuiz = async (subTopic: string, subjectLabel?: string) => {
     if (focusLoadingTopic) return;
     setFocusLoadingTopic(subTopic);
     try {
+      // subject = gerçek ders adı (örn. "Matematik"); topic = zayıf alt-konu (örn. "Türev").
+      // Eskiden subject'e alt-konu gönderiliyordu → AI tutarsız/boş üretip 502 veriyordu.
+      const subject = subjectLabel?.trim() || subTopic;
       const questions = await generateQuiz({
         kind: 'STRICT_CURRICULUM',
-        subject: subTopic,
+        subject,
         topic: subTopic,
         grade: studentGrade,
         count: 5,
@@ -333,7 +339,7 @@ export default function Learn() {
       router.push(
         buildAIQuizPath({
           questions,
-          subject: subTopic,
+          subject,
           count: 5,
           difficulty: 'medium',
           mode: 'focus',
@@ -351,7 +357,7 @@ export default function Learn() {
   const handleExplainSubject = (subjectLabel: string) => {
     const prompt = `Bana ${subjectLabel} konusunu özetle ve 3 anahtar fikrini ver.`;
     router.push(
-      `/(student)/chatbot?seedPrompt=${encodeURIComponent(prompt)}&subject=${encodeURIComponent(
+      `/chatbot?seedPrompt=${encodeURIComponent(prompt)}&subject=${encodeURIComponent(
         subjectLabel,
       )}` as never,
     );
@@ -796,7 +802,8 @@ export default function Learn() {
       router.push(`/(student)/quiz/${subject.toLowerCase()}` as never),
     onProtectStreak: handleQuickQuiz,
     onCelebrateMilestone: handleQuickQuiz,
-    onFocusWeakTopic: (subTopic: string) => handleFocusTopicQuiz(subTopic),
+    onFocusWeakTopic: (subTopic: string, subject?: string) =>
+      handleFocusTopicQuiz(subTopic, subject ? getMeta(subject).label : undefined),
     onStartNewSubject: (subject: string) =>
       router.push(`/(student)/quiz/${subject.toLowerCase()}` as never),
     onStartMockExam: (subject: string) => handleMockExam(getMeta(subject).label),
@@ -1263,7 +1270,8 @@ export default function Learn() {
   const todayMinutes = Math.round(todayBrief.timeSpentTodayMs / 60000);
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-base" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-bg-surface" edges={['top']}>
+      <LearnBackground width={width} height={height} />
       <View className="flex-row items-start px-5 pt-2">
         <View className="flex-1">
           <Text className="text-3xl font-bold text-text-primary">Öğren</Text>

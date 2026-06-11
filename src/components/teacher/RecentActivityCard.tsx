@@ -14,7 +14,7 @@ import type { ActivityEvent, ActivityType } from '@/services/teacherActivityApi'
 const ICON_MAP: Record<ActivityType, { icon: LucideIcon; color: string; bg: string }> = {
   submission: { icon: Send, color: '#D97706', bg: 'bg-warning/15' },
   targeted_done: { icon: Sparkles, color: '#16A34A', bg: 'bg-success/15' },
-  new_student: { icon: UserPlus, color: '#6366F1', bg: 'bg-accent/15' },
+  new_student: { icon: UserPlus, color: '#16A34A', bg: 'bg-accent/15' },
   assignment_created: { icon: ClipboardList, color: '#0891B2', bg: 'bg-accent/15' },
   announcement_created: { icon: Megaphone, color: '#0891B2', bg: 'bg-accent/15' },
 };

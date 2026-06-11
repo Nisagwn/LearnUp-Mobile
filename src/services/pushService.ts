@@ -56,12 +56,18 @@ export async function registerForPushNotifications(): Promise<string | null> {
       name: 'Genel',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#a5b4fc',
+      lightColor: '#86EFAC',
     });
   }
 
+  // projectId — bare/standalone build'lerde otomatik çözülemeyebilir; açıkça geçir.
+  const projectId =
+    (Constants.expoConfig?.extra?.eas?.projectId as string | undefined) ??
+    ((Constants as unknown as { easConfig?: { projectId?: string } }).easConfig?.projectId) ??
+    'bceed329-0a6e-4270-9408-9745d7e35a55';
+
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
     const token = tokenData.data;
     const uid = auth.currentUser?.uid;
     if (uid && token) {
@@ -78,7 +84,28 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
     return token;
   } catch (err) {
-    console.warn('Push token alma hatası:', (err as Error).message);
+    const msg = (err as Error).message || '';
+    // TEŞHİS: release build JS log'u bastırdığı için hatayı Firestore'a yaz (geçici).
+    const uidDbg = auth.currentUser?.uid;
+    if (uidDbg) {
+      void setDoc(
+        doc(db, 'users', uidDbg, 'devices', '_debug'),
+        { lastError: msg, projectId, at: serverTimestamp() },
+        { merge: true },
+      ).catch(() => {});
+    }
+    // FCM yapılandırılmamış (google-services.json yok / native Firebase init edilmemiş):
+    // beklenen durum — arka plan push kapalı ama in-app bildirimler çalışmaya devam eder.
+    // Korkutucu bir hata yerine net, beklenen bir bilgi mesajı bas.
+    if (/FirebaseApp is not initialized|fcm-credentials|firebase|fcm/i.test(msg)) {
+      console.log(
+        '[push] FCM yapılandırılmamış — arka plan push devre dışı. ' +
+          'In-app bildirimler (zil) çalışıyor. Etkinleştirmek için: google-services.json + ' +
+          'expo-notifications plugin + yeni dev build.',
+      );
+    } else {
+      console.warn('[push] Token alınamadı:', msg);
+    }
     return null;
   }
 }

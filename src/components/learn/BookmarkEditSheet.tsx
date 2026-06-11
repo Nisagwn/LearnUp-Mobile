@@ -123,7 +123,7 @@ export function BookmarkEditSheet({
               >
                 {/* KLASÖR */}
                 <View className="flex-row items-center">
-                  <FolderInput color="#4F46E5" size={14} />
+                  <FolderInput color="#15803D" size={14} />
                   <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
                     Klasör
                   </Text>
@@ -154,7 +154,7 @@ export function BookmarkEditSheet({
 
                 {/* ETİKETLER */}
                 <View className="mt-5 flex-row items-center">
-                  <Tag color="#4F46E5" size={14} />
+                  <Tag color="#15803D" size={14} />
                   <Text className="ml-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
                     Etiketler ({tags.length}/12)
                   </Text>
@@ -168,7 +168,7 @@ export function BookmarkEditSheet({
                         className="flex-row items-center rounded-full bg-accent-soft px-2.5 py-1 active:opacity-70"
                       >
                         <Text className="text-[11px] font-semibold text-accent-fg">#{t}</Text>
-                        <X color="#4F46E5" size={10} style={{ marginLeft: 4 }} />
+                        <X color="#15803D" size={10} style={{ marginLeft: 4 }} />
                       </Pressable>
                     ))}
                   </View>
@@ -257,7 +257,7 @@ function FolderOption({
         selected ? 'border-accent bg-accent-soft' : 'border-border-soft bg-bg-surface'
       }`}
     >
-      <Folder color={selected ? '#4F46E5' : '#94A3B8'} size={14} />
+      <Folder color={selected ? '#15803D' : '#94A3B8'} size={14} />
       <Text
         className={`ml-2 flex-1 text-sm ${
           selected ? 'font-semibold text-text-primary' : 'text-text-secondary'

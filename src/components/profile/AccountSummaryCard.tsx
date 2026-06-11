@@ -44,7 +44,7 @@ export function AccountSummaryCard({ memberSince, totalSolved, successRate, net 
   return (
     <View className="rounded-2xl border border-border-soft bg-bg-surface p-4">
       <View className="flex-row" style={{ gap: 10 }}>
-        <Cell icon={Calendar} iconColor="#6366F1" value={memberSince} label="Üyelik" />
+        <Cell icon={Calendar} iconColor="#16A34A" value={memberSince} label="Üyelik" />
         <Cell icon={ListChecks} iconColor="#16A34A" value={totalSolved} label="Çözülen soru" />
       </View>
       <View className="my-3 h-px bg-border-soft" />

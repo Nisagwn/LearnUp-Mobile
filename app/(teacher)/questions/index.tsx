@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Trash2, FileQuestion, CheckCircle2, Sparkles, Plus, Pencil } from 'lucide-react-native';
+import { Trash2, FileQuestion, CheckCircle2, Sparkles, Plus, Pencil, Tag } from 'lucide-react-native';
 import { GenerateQuestionsSheet } from '@/components/teacher/GenerateQuestionsSheet';
+import { ClassifyQuestionsSheet } from '@/components/teacher/ClassifyQuestionsSheet';
 import {
   collection,
   query,
@@ -56,6 +57,7 @@ export default function QuestionPool() {
   const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [genOpen, setGenOpen] = useState(false);
+  const [classifyOpen, setClassifyOpen] = useState(false);
   const [detail, setDetail] = useState<QuestionDoc | null>(null);
 
   useEffect(() => {
@@ -139,22 +141,31 @@ export default function QuestionPool() {
 
   return (
     <SafeAreaView className="flex-1 bg-bg-base" edges={['top']}>
-      <View className="flex-row items-center justify-between px-5 pt-2">
-        <View>
-          <Text className="text-3xl font-bold text-text-primary">Soru Havuzu</Text>
-          <Text className="mt-1 text-sm text-text-muted">{items.length} soru</Text>
+      <View className="px-5 pt-2">
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="text-3xl font-bold text-text-primary">Soru Havuzu</Text>
+            <Text className="mt-1 text-sm text-text-muted">{items.length} soru</Text>
+          </View>
+          <Pressable
+            onPress={() => setClassifyOpen(true)}
+            className="flex-row items-center rounded-full bg-accent-soft px-3 py-1.5 active:opacity-70"
+          >
+            <Tag color="#4F46E5" size={12} />
+            <Text className="ml-1 text-[11px] font-bold text-accent-fg">AI Etiketle</Text>
+          </Pressable>
         </View>
-        <View className="flex-row items-center gap-2">
+        <View className="mt-3 flex-row items-center" style={{ gap: 8 }}>
           <Pressable
             onPress={() => router.push('/(teacher)/questions/create' as never)}
-            className="flex-row items-center rounded-full border border-accent bg-bg-base px-3.5 py-2 active:opacity-80"
+            className="flex-1 flex-row items-center justify-center rounded-full border border-accent bg-bg-base px-3.5 py-2 active:opacity-80"
           >
             <Plus color="#4F46E5" size={14} />
             <Text className="ml-1.5 text-xs font-bold text-accent-fg">Manuel Ekle</Text>
           </Pressable>
           <Pressable
             onPress={() => setGenOpen(true)}
-            className="flex-row items-center rounded-full bg-accent px-3.5 py-2 active:opacity-80"
+            className="flex-1 flex-row items-center justify-center rounded-full bg-accent px-3.5 py-2 active:opacity-80"
           >
             <Sparkles color="white" size={14} />
             <Text className="ml-1.5 text-xs font-bold text-white">AI Üret</Text>
@@ -267,6 +278,14 @@ export default function QuestionPool() {
           }}
         />
       )}
+
+      <ClassifyQuestionsSheet
+        visible={classifyOpen}
+        onClose={() => setClassifyOpen(false)}
+        onFinished={(n) => {
+          if (n > 0) Alert.alert('Etiketleme tamam', `${n} soru başarıyla etiketlendi.`);
+        }}
+      />
 
       <GenerateQuestionsSheet
         visible={genOpen}

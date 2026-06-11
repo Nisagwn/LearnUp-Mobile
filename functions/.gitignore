@@ -1,0 +1,8 @@
+# Firebase Functions — local secrets & env (ASLA commit edilmez)
+.secret.local
+.env.local
+*.local
+
+# Bağımlılıklar / loglar
+node_modules/
+*.log

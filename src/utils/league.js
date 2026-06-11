@@ -7,7 +7,7 @@ export const TIER_META = {
   silver:   { label: 'Gümüş Lig', emoji: '🥈', color: '#94A3B8' },
   gold:     { label: 'Altın Lig', emoji: '🥇', color: '#FBBF24' },
   sapphire: { label: 'Safir Lig', emoji: '💎', color: '#38BDF8' },
-  diamond:  { label: 'Elmas Lig', emoji: '👑', color: '#A78BFA' },
+  diamond:  { label: 'Elmas Lig', emoji: '👑', color: '#84CC16' },
 };
 
 // Her hafta ilk 7 terfi, son 5 küme düşer (functions/lib/league.js ile aynı).

@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  BackHandler,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +28,6 @@ import { generateDynamicHint, generateQuiz } from '@/services/aiService';
 import { fetchSampleQuestions } from '@/services/questionPoolApi';
 import { subjectLabelTR } from '@/utils/subjects';
 import { MathRenderer } from '@/components/quiz/MathRenderer';
-import { useSafeBack } from '@/hooks/useSafeBack';
 import {
   QuestionQueue,
   QueueQuestion,
@@ -38,6 +38,7 @@ import {
 import { UserStatsContext } from '@/contexts/UserStatsContext';
 import { RoundSummaryScreen, SolvedItem } from '@/components/quiz/RoundSummaryScreen';
 import { QuizCoachFAB } from '@/components/quiz/QuizCoachFAB';
+import { QuizForestScene } from '@/components/quiz/QuizForestScene';
 import { WrongAnswerCoachSheet } from '@/components/quiz/WrongAnswerCoachSheet';
 import { LevelUpModal } from '@/components/common/LevelUpModal';
 import { AppLottie } from '@/components/common/AppLottie';
@@ -93,8 +94,11 @@ export default function QuizScreen() {
 
 function QuizScreenInner() {
   const router = useRouter();
-  const safeBack = useSafeBack('/(student)/learn');
-  const { width } = useWindowDimensions();
+  // NOT: useSafeBack KULLANILMIYOR — quiz'den çıkışta her zaman router.replace
+  // ile /learn'e gidiyoruz. router.back() stack'te eski quiz varsa onu açar
+  // (kullanıcı şikayeti: "geri gittiğimde eski quiz çıkıyor"). Replace ile
+  // stack temizlenir, eski quiz görünmez.
+  const { width, height } = useWindowDimensions();
   const {
     topic,
     payload,
@@ -163,6 +167,8 @@ function QuizScreenInner() {
   const [coachSheetOpen, setCoachSheetOpen] = useState(false);
   const [coachHint, setCoachHint] = useState<string | null>(null);
   const [levelUp, setLevelUp] = useState<{ level: number; title?: string } | null>(null);
+  // Quiz'den çıkış onay modal'ı — cevaplanmış soru varsa kayıp uyarısı.
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
 
   const lastLevelRef = useRef<number | null>(null);
 
@@ -319,6 +325,32 @@ function QuizScreenInner() {
   const handleFinishRound = () => {
     setFinished(true);
   };
+
+  // Quiz'den çıkışı yönet — stack temizliği + cevap kayıp uyarısı.
+  // Kullanım: X butonu, Android hardware back, dış navigasyon istekleri.
+  const requestExit = useCallback(() => {
+    // Cevap girilmediyse (veya zaten finished/empty state) → direkt /learn
+    if (finished || emptyState || solvedHistory.length === 0) {
+      router.replace('/(student)/learn');
+      return;
+    }
+    // Cevap var → onay iste
+    setExitConfirmOpen(true);
+  }, [finished, emptyState, solvedHistory.length, router]);
+
+  // Android hardware back tuşu — onay modal'ını aç (veya çıkışı tetikle).
+  // Modal açıkken hardware back: önce modal kapanır.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (exitConfirmOpen) {
+        setExitConfirmOpen(false);
+        return true;
+      }
+      requestExit();
+      return true;
+    });
+    return () => sub.remove();
+  }, [requestExit, exitConfirmOpen]);
 
   const handleRestart = async () => {
     // AI mode → aynı konu/sayı/zorluk/stil ile yeni payload üret, URL'i replace et
@@ -482,7 +514,7 @@ function QuizScreenInner() {
               </Pressable>
             ) : null}
             <Pressable
-              onPress={safeBack}
+              onPress={requestExit}
               className="items-center rounded-xl border border-border-soft py-4 active:bg-bg-elevated"
             >
               <Text className="font-semibold text-text-primary">Geri Dön</Text>
@@ -509,9 +541,10 @@ function QuizScreenInner() {
   const isLastChoice = current.choices.length;
 
   return (
-    <SafeAreaView className="flex-1 bg-bg-base" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-bg-surface" edges={['top']}>
+      <QuizForestScene width={width} height={height} />
       <View className="flex-row items-center justify-between px-4 pt-2">
-        <Pressable onPress={safeBack} className="p-2 active:opacity-60" hitSlop={6}>
+        <Pressable onPress={requestExit} className="p-2 active:opacity-60" hitSlop={6}>
           <X color="#475569" size={22} />
         </Pressable>
         <View className="flex-1 items-center">
@@ -632,7 +665,10 @@ function QuizScreenInner() {
         </View>
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 border-t border-border-soft bg-bg-base px-6 pb-8 pt-3">
+      <View
+        className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-4"
+        style={{ backgroundColor: 'transparent' }}
+      >
         {!showResult ? (
           <Pressable
             onPress={handleSubmit}
@@ -727,6 +763,57 @@ function QuizScreenInner() {
             >
               <Text className="font-semibold text-white">Anladım</Text>
             </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Çıkış onay modal'ı — cevap girilmiş tur ortasında çıkışta gösterilir.
+          3 seçenek: Devam et (modal kapanır), Turu bitir (özete git, XP korunur),
+          Kaydetmeden çık (router.replace ile /learn'e, ilerleme kaybolur). */}
+      <Modal
+        visible={exitConfirmOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setExitConfirmOpen(false)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/55 px-6">
+          <View className="w-full rounded-2xl bg-bg-base p-5">
+            <View className="flex-row items-center">
+              <Flag color="#DC2626" size={20} />
+              <Text className="ml-2 text-base font-bold text-text-primary">
+                Turdan çıkmak istiyor musun?
+              </Text>
+            </View>
+            <Text className="mt-2 text-sm leading-5 text-text-secondary">
+              Bu turda {solvedHistory.length} soru cevapladın.
+              {'\n'}Turu bitirirsen özet + XP korunur. Kaydetmeden çıkarsan ilerleme silinir.
+            </Text>
+            <View className="mt-5 gap-2">
+              <Pressable
+                onPress={() => setExitConfirmOpen(false)}
+                className="items-center rounded-xl bg-accent py-3 active:opacity-80"
+              >
+                <Text className="font-semibold text-white">Devam et</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setExitConfirmOpen(false);
+                  setFinished(true);
+                }}
+                className="items-center rounded-xl border border-success bg-success-soft py-3 active:opacity-80"
+              >
+                <Text className="font-semibold text-success">Turu bitir (özet göster)</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setExitConfirmOpen(false);
+                  router.replace('/(student)/learn');
+                }}
+                className="items-center rounded-xl border border-border-soft py-3 active:bg-bg-elevated"
+              >
+                <Text className="font-semibold text-text-secondary">Kaydetmeden çık</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>

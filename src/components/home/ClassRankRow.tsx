@@ -32,9 +32,9 @@ export function ClassRankRow({ rank, total, loading, onPress }: Props) {
       <View className="flex-row items-center">
         <View
           className="h-10 w-10 items-center justify-center rounded-2xl"
-          style={{ backgroundColor: isTop ? '#FEF3C7' : '#EEF2FF' }}
+          style={{ backgroundColor: isTop ? '#FEF3C7' : '#DCFCE7' }}
         >
-          <Trophy color={isTop ? '#D97706' : '#6366F1'} size={18} />
+          <Trophy color={isTop ? '#D97706' : '#16A34A'} size={18} />
         </View>
         <View className="ml-3">
           <Text className="text-xs text-text-muted">Sınıf Sıralaması</Text>

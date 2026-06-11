@@ -19,8 +19,8 @@ export function FolderRow({
   expanded,
   onToggle,
   icon: Icon,
-  iconColor = '#4F46E5',
-  iconBg = '#EEF2FF',
+  iconColor = '#15803D',
+  iconBg = '#DCFCE7',
   trailingAction,
 }: Props) {
   const DisplayIcon = Icon ?? Folder;
@@ -70,7 +70,7 @@ export function AddFolderRow({ onPress }: { onPress: () => void }) {
       className="flex-row items-center rounded-2xl border border-dashed border-border-soft bg-bg-base p-3 active:bg-bg-elevated"
     >
       <View className="h-9 w-9 items-center justify-center rounded-xl bg-accent-soft">
-        <FolderPlus color="#4F46E5" size={18} />
+        <FolderPlus color="#15803D" size={18} />
       </View>
       <Text className="ml-3 text-sm font-semibold text-accent-fg">Yeni klasör oluştur</Text>
     </Pressable>

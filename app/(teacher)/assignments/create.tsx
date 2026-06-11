@@ -12,13 +12,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Check, ListChecks, X, Eye } from 'lucide-react-native';
+import { ChevronLeft, Check, ListChecks, Eye, CheckCheck, ShieldAlert } from 'lucide-react-native';
 import { auth } from '@/services/firebase';
 import { createAssignment } from '@/services/assignmentsApi';
+import { approveQuestions } from '@/services/questionPoolApi';
 import type { QuestionRow } from '@/components/teacher/QuestionPickerSheet';
 import { SmartQuestionWizard } from '@/components/teacher/SmartQuestionWizard';
-import { Card } from '@/components/common/Card';
-import { MathRenderer } from '@/components/quiz/MathRenderer';
+import { QuestionReviewCard } from '@/components/teacher/QuestionReviewCard';
 
 const DUE_OPTIONS: { id: string; label: string; days: number | null }[] = [
   { id: 'none', label: 'Tarihsiz', days: null },
@@ -37,58 +37,99 @@ export default function CreateAssignment() {
   const [picked, setPicked] = useState<QuestionRow[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
+
+  const pendingCount = picked.filter(
+    (q) => q.verified === false && !approvedIds.has(q.id),
+  ).length;
 
   const removeQuestion = (id: string) => {
     setPicked((prev) => prev.filter((q) => q.id !== id));
+    setApprovedIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    if (expandedId === id) setExpandedId(null);
   };
 
-  const handleSave = async () => {
+  const approveOne = (id: string) =>
+    setApprovedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
+  const approveAll = () =>
+    setApprovedIds(() => {
+      const next = new Set<string>();
+      for (const q of picked) if (q.verified === false) next.add(q.id);
+      return next;
+    });
+
+  const doPublish = async () => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
+    setSaving(true);
+    try {
+      // Öğretmenin incelediği onaysız soruları kalıcı onayla → öğrenciye yalnız
+      // verified:true sorular gider.
+      const unverifiedIds = picked.filter((p) => p.verified === false).map((p) => p.id);
+      if (unverifiedIds.length > 0) await approveQuestions(unverifiedIds);
+
+      const opt = DUE_OPTIONS.find((o) => o.id === dueId);
+      let dueDate: Date | null = null;
+      if (opt?.days != null) {
+        const d = new Date();
+        d.setDate(d.getDate() + opt.days);
+        d.setHours(23, 59, 0, 0);
+        dueDate = d;
+      }
+      const questionIds = picked.map((p) => p.id);
+      await createAssignment(uid, {
+        title,
+        description,
+        subject,
+        dueDate,
+        questionIds,
+        submissionType: questionIds.length > 0 ? 'quiz' : 'free',
+      });
+      router.back();
+    } catch (err) {
+      Alert.alert('Hata', (err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSave = () => {
+    if (!auth.currentUser?.uid) return;
     if (title.trim().length < 2) {
       Alert.alert('Eksik bilgi', 'Ödev başlığı en az 2 karakter olmalı.');
+      return;
+    }
+    if (pendingCount > 0) {
+      Alert.alert(
+        'Onay gerekli',
+        `${pendingCount} soru henüz onaylanmadı. Her birini inceleyip onayla ya da listeden çıkar.`,
+      );
       return;
     }
     Alert.alert(
       'Ödevi yayınla',
       picked.length > 0
-        ? `${picked.length} soruyu öğrencilere göndereceksin. Onaylıyor musun?`
+        ? `${picked.length} soru öğrencilere gönderilecek. Onaylıyor musun?`
         : 'Soru eklemeden boş bir ödev yayınlanacak. Devam edilsin mi?',
       [
         { text: 'Vazgeç', style: 'cancel' },
-        {
-          text: 'Yayınla',
-          onPress: async () => {
-            setSaving(true);
-            try {
-              const opt = DUE_OPTIONS.find((o) => o.id === dueId);
-              let dueDate: Date | null = null;
-              if (opt?.days != null) {
-                const d = new Date();
-                d.setDate(d.getDate() + opt.days);
-                d.setHours(23, 59, 0, 0);
-                dueDate = d;
-              }
-              const questionIds = picked.map((p) => p.id);
-              await createAssignment(uid, {
-                title,
-                description,
-                subject,
-                dueDate,
-                questionIds,
-                submissionType: questionIds.length > 0 ? 'quiz' : 'free',
-              });
-              router.back();
-            } catch (err) {
-              Alert.alert('Hata', (err as Error).message);
-            } finally {
-              setSaving(false);
-            }
-          },
-        },
+        { text: picked.length > 0 ? 'Onayla & Yayınla' : 'Yayınla', onPress: doPublish },
       ],
     );
   };
+
+  const canPublish = !saving && pendingCount === 0;
 
   return (
     <KeyboardAvoidingView
@@ -104,7 +145,10 @@ export default function CreateAssignment() {
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-          <Text className="text-xs font-semibold uppercase tracking-wide text-text-muted">Başlık</Text>
+          {/* Ödev bilgileri */}
+          <Text className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+            Başlık
+          </Text>
           <TextInput
             value={title}
             onChangeText={setTitle}
@@ -114,7 +158,9 @@ export default function CreateAssignment() {
             className="mt-1.5 rounded-xl border border-border-soft bg-bg-surface px-3.5 py-2.5 text-sm text-text-primary"
           />
 
-          <Text className="mt-4 text-xs font-semibold uppercase tracking-wide text-text-muted">Ders</Text>
+          <Text className="mt-4 text-xs font-semibold uppercase tracking-wide text-text-muted">
+            Ders
+          </Text>
           <TextInput
             value={subject}
             onChangeText={setSubject}
@@ -138,7 +184,7 @@ export default function CreateAssignment() {
             style={{ minHeight: 90, textAlignVertical: 'top' }}
           />
 
-          {/* Soru havuzundan seçim */}
+          {/* Soru kaynağı */}
           <Text className="mt-5 text-xs font-semibold uppercase tracking-wide text-text-muted">
             Sorular
           </Text>
@@ -151,67 +197,69 @@ export default function CreateAssignment() {
             </View>
             <View className="ml-3 flex-1">
               <Text className="text-sm font-semibold text-text-primary">
-                {picked.length === 0 ? 'Soru ekle' : 'Soruları değiştir / ekle'}
+                {picked.length === 0 ? 'Soru seç / üret' : 'Soruları değiştir / ekle'}
               </Text>
               <Text className="text-[11px] text-text-muted">
                 {picked.length === 0
-                  ? 'Havuzdan seç — öğrenci çözer, otomatik puanlanır'
-                  : 'Yeni ekleme yapabilir veya seçimi değiştirebilirsin'}
+                  ? 'Müfredattan filtrele, havuzdan seç veya AI ile üret'
+                  : 'Yeni set hazırla veya mevcut seçimi değiştir'}
               </Text>
             </View>
           </Pressable>
 
-          {/* Seçili soruların önizlemesi — öğretmen son kez kontrol eder */}
+          {/* İnceleme + onay */}
           {picked.length > 0 ? (
             <View className="mt-4">
-              <View className="flex-row items-center" style={{ gap: 6 }}>
-                <Eye color="#4F46E5" size={14} />
-                <Text className="text-xs font-semibold uppercase tracking-wide text-accent-fg">
-                  Ön İzleme ({picked.length} soru)
-                </Text>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center" style={{ gap: 6 }}>
+                  <Eye color="#4F46E5" size={14} />
+                  <Text className="text-xs font-semibold uppercase tracking-wide text-accent-fg">
+                    İnceleme ({picked.length} soru)
+                  </Text>
+                </View>
+                {pendingCount > 0 ? (
+                  <Pressable
+                    onPress={approveAll}
+                    className="flex-row items-center rounded-full bg-success px-2.5 py-1 active:opacity-80"
+                  >
+                    <CheckCheck color="white" size={12} />
+                    <Text className="ml-1 text-[11px] font-bold text-white">Tümünü onayla</Text>
+                  </Pressable>
+                ) : null}
               </View>
-              <Text className="mt-0.5 text-[11px] text-text-muted">
-                Öğrenciye gitmeden önce gözden geçir. İstemediğini × ile çıkar.
-              </Text>
+
+              {pendingCount > 0 ? (
+                <View className="mt-2 flex-row items-center rounded-xl border border-warning/40 bg-warning-soft p-2.5">
+                  <ShieldAlert color="#D97706" size={14} />
+                  <Text className="ml-2 flex-1 text-[11px] text-text-secondary">
+                    {pendingCount} soru onay bekliyor. Karta dokunup inceleyebilir, onaylayabilir
+                    veya çıkarabilirsin. Onaylanmadan yayınlanamaz.
+                  </Text>
+                </View>
+              ) : (
+                <Text className="mt-1 text-[11px] text-text-muted">
+                  Tüm sorular onaylı. Öğrenciye gitmeden son bir kez göz at.
+                </Text>
+              )}
+
               <View className="mt-3" style={{ gap: 8 }}>
-                {picked.map((q, idx) => {
-                  const metaParts = [q.subject];
-                  if (q.grade) metaParts.push(`${q.grade}. sınıf`);
-                  if (q.difficulty) metaParts.push(q.difficulty);
-                  return (
-                    <Card key={q.id}>
-                      <View className="flex-row items-start justify-between">
-                        <View className="flex-1 flex-row items-center">
-                          <View className="mr-2 h-6 w-6 items-center justify-center rounded-md bg-accent">
-                            <Text className="text-[11px] font-bold text-white">{idx + 1}</Text>
-                          </View>
-                          <Text className="flex-1 text-[10px] uppercase tracking-wide text-accent-fg">
-                            {metaParts.join(' · ')}
-                          </Text>
-                          {q.isAI ? (
-                            <View className="ml-1.5 rounded-full bg-bg-elevated px-1.5 py-0.5">
-                              <Text className="text-[9px] font-semibold text-text-muted">AI</Text>
-                            </View>
-                          ) : null}
-                        </View>
-                        <Pressable
-                          onPress={() => removeQuestion(q.id)}
-                          hitSlop={8}
-                          className="ml-2 h-7 w-7 items-center justify-center rounded-full border border-border-soft bg-bg-base active:bg-bg-elevated"
-                        >
-                          <X color="#DC2626" size={14} />
-                        </Pressable>
-                      </View>
-                      <View className="mt-2">
-                        <MathRenderer content={q.text} fontSize={13} color="#0F172A" />
-                      </View>
-                    </Card>
-                  );
-                })}
+                {picked.map((q, idx) => (
+                  <QuestionReviewCard
+                    key={q.id}
+                    row={q}
+                    index={idx}
+                    expanded={expandedId === q.id}
+                    approved={approvedIds.has(q.id)}
+                    onToggle={() => setExpandedId((cur) => (cur === q.id ? null : q.id))}
+                    onRemove={() => removeQuestion(q.id)}
+                    onApprove={() => approveOne(q.id)}
+                  />
+                ))}
               </View>
             </View>
           ) : null}
 
+          {/* Son Tarih */}
           <Text className="mt-5 text-xs font-semibold uppercase tracking-wide text-text-muted">
             Son Tarih
           </Text>
@@ -237,20 +285,24 @@ export default function CreateAssignment() {
 
           <Pressable
             onPress={handleSave}
-            disabled={saving}
-            className={`mt-6 flex-row items-center justify-center rounded-xl bg-accent py-3 active:opacity-80 ${
-              saving ? 'opacity-60' : ''
+            disabled={!canPublish}
+            className={`mt-6 flex-row items-center justify-center rounded-xl py-3 active:opacity-80 ${
+              canPublish ? 'bg-accent' : 'bg-bg-elevated'
             }`}
           >
             {saving ? (
               <ActivityIndicator color="white" size="small" />
             ) : (
-              <Check color="white" size={16} />
+              <Check color={canPublish ? 'white' : '#94A3B8'} size={16} />
             )}
-            <Text className="ml-1.5 text-sm font-bold text-white">
-              {picked.length > 0
-                ? `${picked.length} soruyu Yayınla`
-                : 'Ödevi Yayınla'}
+            <Text
+              className={`ml-1.5 text-sm font-bold ${canPublish ? 'text-white' : 'text-text-muted'}`}
+            >
+              {pendingCount > 0
+                ? `${pendingCount} soruyu onayla`
+                : picked.length > 0
+                  ? `${picked.length} soruyu Yayınla`
+                  : 'Ödevi Yayınla'}
             </Text>
           </Pressable>
         </ScrollView>
@@ -260,6 +312,9 @@ export default function CreateAssignment() {
           onClose={() => setPickerOpen(false)}
           onConfirm={(rows) => {
             setPicked(rows);
+            // Yeni set → onay durumunu sıfırla
+            setApprovedIds(new Set());
+            setExpandedId(null);
             setPickerOpen(false);
           }}
         />

@@ -36,7 +36,7 @@ export function FeedCardBase({
   title,
   subtitle,
   primaryLabel,
-  primaryColor = '#6366F1',
+  primaryColor = '#16A34A',
   primaryTextColor = '#FFFFFF',
   onPrimary,
   onDismiss,

@@ -3,7 +3,7 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { Award } from 'lucide-react-native';
 import { SectionHeader } from '@/components/common/SectionHeader';
 import { EmptyState } from '@/components/common/EmptyState';
-import { BADGE_CATALOG, getBadgeById } from '@/utils/badges';
+import { BADGE_CATALOG, getBadgeById, normalizeUnlockedMap } from '@/utils/badges';
 
 type CatalogEntry = (typeof BADGE_CATALOG)[number];
 type BadgeTimestamp = string | number | { toMillis?: () => number } | undefined;
@@ -33,7 +33,7 @@ function unlockedMillis(value: BadgeTimestamp): number {
 
 export function BadgeStrip({ unlocked, onBadgePress, onSeeAll }: Props) {
   const items = useMemo(() => {
-    const unlockedMap = unlocked || {};
+    const unlockedMap = normalizeUnlockedMap(unlocked) as Record<string, BadgeTimestamp>;
     const sortedUnlocked = Object.keys(unlockedMap)
       .map((id) => ({ entry: getBadgeById(id), ts: unlockedMillis(unlockedMap[id]) }))
       .filter((x): x is { entry: CatalogEntry; ts: number } => !!x.entry)
@@ -51,7 +51,7 @@ export function BadgeStrip({ unlocked, onBadgePress, onSeeAll }: Props) {
     return [...recentUnlocked, ...lockedNext];
   }, [unlocked]);
 
-  const unlockedCount = Object.keys(unlocked || {}).length;
+  const unlockedCount = Object.keys(normalizeUnlockedMap(unlocked) || {}).length;
 
   if (unlockedCount === 0 && items.length === 0) {
     return (

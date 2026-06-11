@@ -1,17 +1,15 @@
 import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
 import { X, CheckCircle2, Sparkles } from 'lucide-react-native';
 import { MathRenderer } from '@/components/quiz/MathRenderer';
+import {
+  getQuestionText,
+  getOptions,
+  resolveCorrectIndex,
+  type QuestionShape,
+} from '@/utils/questionShape';
 
-export interface QuestionDetail {
+export interface QuestionDetail extends QuestionShape {
   id: string;
-  question?: string;
-  question_text?: string;
-  text?: string;
-  options?: unknown;
-  choices?: unknown;
-  correct_answer?: unknown; // number | string | letter
-  correctIndex?: number;
-  answer?: unknown;
   explanation?: string;
   subject?: string;
   category?: string;
@@ -30,41 +28,7 @@ type Props = {
 };
 
 function getText(d: QuestionDetail): string {
-  return d.text || d.question_text || d.question || 'Soru metni yok';
-}
-
-function getOptions(d: QuestionDetail): string[] {
-  const arr = Array.isArray(d.options)
-    ? d.options
-    : Array.isArray(d.choices)
-      ? d.choices
-      : [];
-  return (arr as unknown[]).filter((x): x is string => typeof x === 'string');
-}
-
-/**
- * correct_answer / answer / correctIndex / 'A'-'E' harfi — hepsini index'e indirger.
- */
-function resolveCorrectIndex(d: QuestionDetail, options: string[]): number {
-  if (typeof d.correctIndex === 'number') return d.correctIndex;
-  const candidates: unknown[] = [d.correct_answer, d.answer];
-  for (const v of candidates) {
-    if (typeof v === 'number' && v >= 0 && v < options.length) return v;
-    if (typeof v === 'string') {
-      const trimmed = v.trim();
-      // Harf: A,B,C,D,E
-      if (/^[A-Ea-e]$/.test(trimmed)) {
-        return trimmed.toUpperCase().charCodeAt(0) - 65;
-      }
-      // Sayısal string
-      const n = Number(trimmed);
-      if (!Number.isNaN(n) && n >= 0 && n < options.length) return n;
-      // Tam metinle eşleşme
-      const idx = options.findIndex((o) => o === trimmed);
-      if (idx >= 0) return idx;
-    }
-  }
-  return -1;
+  return getQuestionText(d) || 'Soru metni yok';
 }
 
 export function QuestionDetailSheet({ visible, question, onClose }: Props) {
@@ -102,7 +66,7 @@ export function QuestionDetailSheet({ visible, question, onClose }: Props) {
               <Text className="text-base font-bold text-text-primary">Soru Detayı</Text>
               {isAI ? (
                 <View className="ml-2 flex-row items-center rounded-full bg-accent-soft px-2 py-0.5">
-                  <Sparkles color="#6366F1" size={10} />
+                  <Sparkles color="#16A34A" size={10} />
                   <Text className="ml-1 text-[10px] font-semibold text-accent-fg">AI</Text>
                 </View>
               ) : null}

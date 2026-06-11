@@ -19,7 +19,7 @@ type Props = {
 
 export function SettingsRow({
   icon: Icon,
-  iconColor = '#6366F1',
+  iconColor = '#16A34A',
   label,
   sublabel,
   rightText,

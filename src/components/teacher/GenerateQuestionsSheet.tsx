@@ -64,7 +64,7 @@ export function GenerateQuestionsSheet({ visible, onClose, onSaved }: Props) {
     setError(null);
     setPhase('generating');
     try {
-      const result = await generateQuiz(topicText, count, difficulty);
+      const result = await generateQuiz(topicText, count, difficulty, { quality: true });
       if (result.length === 0) {
         setError('Soru üretilemedi, farklı bir konu dene.');
         setPhase('form');
@@ -93,8 +93,16 @@ export function GenerateQuestionsSheet({ visible, onClose, onSaved }: Props) {
             is_ai_generated: true,
             subject: subj,
             category: subj,
-            topic: seed,
-            sub_topic: seed,
+            topic:
+              q.topic && q.topic.trim() && q.topic.trim().toLowerCase() !== 'genel'
+                ? q.topic.trim()
+                : seed,
+            sub_topic:
+              q.subTopic && q.subTopic.trim()
+                ? q.subTopic.trim()
+                : q.topic && q.topic.trim() && q.topic.trim().toLowerCase() !== 'genel'
+                  ? q.topic.trim()
+                  : seed,
             grade,
             difficulty,
             question_text: q.question,
@@ -103,6 +111,7 @@ export function GenerateQuestionsSheet({ visible, onClose, onSaved }: Props) {
             correct_answer: q.choices[q.answer],
             correctAnswer: q.choices[q.answer],
             explanation: q.hint ?? '',
+            qualityScore: typeof q.qualityScore === 'number' ? q.qualityScore : null,
             random_seed: Math.floor(Math.random() * 1000000),
             createdAt: serverTimestamp(),
           }),
@@ -125,7 +134,7 @@ export function GenerateQuestionsSheet({ visible, onClose, onSaved }: Props) {
               <View className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border-soft" />
               <View className="flex-row items-center">
                 <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-soft">
-                  <Sparkles color="#4F46E5" size={18} />
+                  <Sparkles color="#15803D" size={18} />
                 </View>
                 <Text className="ml-3 flex-1 text-base font-semibold text-text-primary">
                   AI ile Soru Üret

@@ -21,8 +21,8 @@ const LINKS: Link[] = [
   {
     label: 'Sınıfım',
     icon: Users,
-    iconColor: '#6366F1',
-    bgColor: '#EEF2FF',
+    iconColor: '#16A34A',
+    bgColor: '#DCFCE7',
     route: '/(teacher)/classes',
   },
   {

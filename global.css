@@ -2,49 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * v2 — Orman teması. Yeşil sadece accent/aksiyon/buton'larda.
+ * Text'ler nötr slate (okunabilirlik için).
+ * theme.ts ile birebir senkron — RGB triplet (Tailwind opacity için).
+ */
 @layer base {
   :root {
+    /* Aydınlık */
     --color-bg-base: 255 255 255;
-    --color-bg-surface: 248 250 252;
-    --color-bg-elevated: 241 245 249;
-    --color-text-primary: 15 23 42;
-    --color-text-secondary: 71 85 105;
-    --color-text-muted: 148 163 184;
-    --color-border-soft: 226 232 240;
-    --color-accent: 99 102 241;
-    --color-accent-fg: 79 70 229;
-    --color-accent-soft: 238 242 255;
-    --color-success: 22 163 74;
+    --color-bg-surface: 248 250 252;     /* slate-50 nötr */
+    --color-bg-elevated: 241 245 249;    /* slate-100 nötr */
+    --color-text-primary: 15 23 42;      /* slate-900 (okunur) */
+    --color-text-secondary: 71 85 105;   /* slate-600 */
+    --color-text-muted: 148 163 184;     /* slate-400 */
+    --color-border-soft: 226 232 240;    /* slate-200 nötr */
+    --color-accent: 22 163 74;           /* canlı yeşil */
+    --color-accent-fg: 21 128 61;        /* moss link */
+    --color-accent-soft: 220 252 231;    /* mint chip */
+    --color-success: 34 197 94;
     --color-success-soft: 220 252 231;
     --color-danger: 220 38 38;
     --color-danger-soft: 254 226 226;
-    --color-warning: 217 119 6;
-    --color-warning-soft: 254 243 199;
-    --color-xp: 139 92 246;
-    --color-gold: 245 158 11;
-    --color-streak: 249 115 22;
+    --color-warning: 202 138 4;
+    --color-warning-soft: 254 249 195;
+    --color-xp: 132 204 22;              /* lime (chip/badge'de) */
+    --color-gold: 234 179 8;
+    --color-streak: 245 158 11;
   }
 
   .dark:root,
   .dark {
-    --color-bg-base: 15 23 42;
-    --color-bg-surface: 30 41 59;
-    --color-bg-elevated: 51 65 85;
-    --color-text-primary: 241 245 249;
-    --color-text-secondary: 203 213 225;
-    --color-text-muted: 148 163 184;
+    /* Karanlık */
+    --color-bg-base: 15 23 42;           /* slate-900 */
+    --color-bg-surface: 30 41 59;        /* slate-800 */
+    --color-bg-elevated: 51 65 85;       /* slate-700 */
+    --color-text-primary: 241 245 249;   /* slate-100 */
+    --color-text-secondary: 203 213 225; /* slate-300 */
+    --color-text-muted: 148 163 184;     /* slate-400 */
     --color-border-soft: 51 65 85;
-    --color-accent: 129 140 248;
-    --color-accent-fg: 165 180 252;
-    --color-accent-soft: 49 46 129;
-    --color-success: 34 197 94;
+    --color-accent: 74 222 128;
+    --color-accent-fg: 134 239 172;
+    --color-accent-soft: 20 83 45;
+    --color-success: 74 222 128;
     --color-success-soft: 20 83 45;
     --color-danger: 248 113 113;
     --color-danger-soft: 127 29 29;
-    --color-warning: 245 158 11;
-    --color-warning-soft: 120 53 15;
-    --color-xp: 167 139 250;
-    --color-gold: 251 191 36;
+    --color-warning: 250 204 21;
+    --color-warning-soft: 113 63 18;
+    --color-xp: 163 230 53;
+    --color-gold: 250 204 21;
     --color-streak: 251 146 60;
   }
 }

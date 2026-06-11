@@ -4,12 +4,14 @@
 // zaman (nowMs) dışarıdan enjekte edilir.
 
 import { categorize, type SRSCard } from '@/utils/srs';
+import { resolveSubject } from '@/utils/subjects';
 
 export type StudyTaskKind = 'srs' | 'weak' | 'momentum' | 'start';
 
 export type StudyTask = {
   kind: StudyTaskKind;
-  subject: string; // görüntülenen ders adı (mastery anahtarı orijinal harf düzeni)
+  subject: string; // görüntülenen ders adı — Türkçe kanonik (örn. "Matematik")
+  routeSubject: string; // navigasyon/veri eşleşmesi için ham ders adı (örn. "mathematics")
   subTopic?: string;
   title: string;
   reason: string;
@@ -41,29 +43,39 @@ function estimatedMinutes(subjectLower: string, avgSec: Record<string, number>):
 }
 
 // nextReviewAt'i geçmiş (review) veya henüz öğrenilmemiş (new) kartlar "due".
+// Yalnız müfredat dersleri plana girer; özel AI konuları / "Genel" elenir, böylece
+// plan alakasız yerden soru çekmez. Kanonik anahtarda birleştirilir ("math" + "Matematik").
 function buildSrsCandidates(input: StudyPlanInput): StudyTask[] {
   const { srsCards, avgSecondsPerSubject, nowMs } = input;
-  const bySubject = new Map<string, { count: number; maxOverdueDays: number }>();
+  const byKey = new Map<
+    string,
+    { label: string; routeSubject: string; count: number; maxOverdueDays: number }
+  >();
   srsCards.forEach((c) => {
     const cat = categorize(c, nowMs);
     if (cat !== 'new' && cat !== 'review') return;
-    const subj = c.subject || 'Genel';
+    const raw = c.subject || '';
+    const resolved = resolveSubject(raw);
+    if (!resolved.canonical) return; // müfredat dışı (özel AI konusu / Genel) → plana alma
     const overdueDays =
       cat === 'review' && c.nextReviewAtMs > 0 ? Math.max(0, (nowMs - c.nextReviewAtMs) / DAY_MS) : 7;
-    const cur = bySubject.get(subj) ?? { count: 0, maxOverdueDays: 0 };
+    const cur =
+      byKey.get(resolved.key) ??
+      { label: resolved.label, routeSubject: raw, count: 0, maxOverdueDays: 0 };
     cur.count += 1;
     cur.maxOverdueDays = Math.max(cur.maxOverdueDays, overdueDays);
-    bySubject.set(subj, cur);
+    byKey.set(resolved.key, cur);
   });
 
-  return Array.from(bySubject.entries()).map(([subject, { count, maxOverdueDays }]) => {
+  return Array.from(byKey.values()).map(({ label, routeSubject, count, maxOverdueDays }) => {
     const urgency = clamp01(0.6 * clamp01(count / 8) + 0.4 * clamp01(maxOverdueDays / 7));
     return {
       kind: 'srs' as const,
-      subject,
-      title: `${subject} — tekrar zamanı`,
+      subject: label,
+      routeSubject,
+      title: `${label} — tekrar zamanı`,
       reason: `${count} kart tekrarı bekliyor`,
-      estimatedMin: estimatedMinutes(subject.toLowerCase(), avgSecondsPerSubject),
+      estimatedMin: estimatedMinutes(routeSubject.toLowerCase(), avgSecondsPerSubject),
       score: 0.5 * urgency,
     };
   });
@@ -76,6 +88,9 @@ function buildMasteryCandidates(input: StudyPlanInput): StudyTask[] {
   Object.entries(masteryScores).forEach(([subject, m]) => {
     const solved = m.solved_count ?? 0;
     if (solved < MIN_SOLVED_FOR_SIGNAL) return;
+    const resolved = resolveSubject(subject);
+    if (!resolved.canonical) return; // müfredat dışı (özel AI konusu) → plana alma
+    const label = resolved.label;
     const score = m.score ?? 0;
     const lower = subject.toLowerCase();
     const estMin = estimatedMinutes(lower, avgSecondsPerSubject);
@@ -84,9 +99,10 @@ function buildMasteryCandidates(input: StudyPlanInput): StudyTask[] {
     if (score < 100) {
       tasks.push({
         kind: 'weak',
-        subject,
+        subject: label,
+        routeSubject: subject,
         subTopic: weak?.subTopic,
-        title: `${subject} — eksik kapat`,
+        title: `${label} — eksik kapat`,
         reason: weak?.subTopic
           ? `En çok "${weak.subTopic}" konusunda zorlanıyorsun`
           : `Ustalık %${score}`,
@@ -98,8 +114,9 @@ function buildMasteryCandidates(input: StudyPlanInput): StudyTask[] {
     if (subjectTrends[lower] === 'up') {
       tasks.push({
         kind: 'momentum',
-        subject,
-        title: `${subject} — yükselişini sürdür`,
+        subject: label,
+        routeSubject: subject,
+        title: `${label} — yükselişini sürdür`,
         reason: 'Son haftalarda yükselişte, pekiştir',
         estimatedMin: estMin,
         score: 0.2,
@@ -125,6 +142,7 @@ export function buildStudyPlan(input: StudyPlanInput): StudyTask[] {
       {
         kind: 'start',
         subject: '',
+        routeSubject: '',
         title: 'İlk quizinle başla',
         reason: 'Birkaç soru çöz, planın kişiselleşsin',
         estimatedMin: 5,

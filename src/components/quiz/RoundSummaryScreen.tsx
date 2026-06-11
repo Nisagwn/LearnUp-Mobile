@@ -95,7 +95,7 @@ export function RoundSummaryScreen({
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="px-5 pt-2">
           <LinearGradient
-            colors={goodResult ? ['#6366F1', '#8B5CF6'] : ['#94A3B8', '#64748B']}
+            colors={goodResult ? ['#16A34A', '#15803D'] : ['#94A3B8', '#64748B']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ borderRadius: 24 }}
@@ -152,7 +152,7 @@ export function RoundSummaryScreen({
             />
           </View>
           <View className="mt-3 flex-row gap-3">
-            <StatBox icon={Award} color="#6366F1" bg="#EEF2FF" label="Net" value={stats.net} />
+            <StatBox icon={Award} color="#16A34A" bg="#DCFCE7" label="Net" value={stats.net} />
             <StatBox
               icon={Clock}
               color="#F97316"

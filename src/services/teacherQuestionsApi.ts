@@ -158,6 +158,9 @@ export async function getManualQuestion(id: string): Promise<ManualQuestionDoc |
 
 function validateInput(input: ManualQuestionInput): void {
   if (!input.subject || !input.subject.trim()) throw new Error('Ders boş olamaz');
+  if (!input.topic || !input.topic.trim()) {
+    throw new Error('Konu zorunlu — etiketsiz soru havuza eklenemez');
+  }
   if (!input.grade || !['9', '10', '11', '12'].includes(input.grade)) {
     throw new Error('Geçerli bir sınıf seç (9/10/11/12)');
   }

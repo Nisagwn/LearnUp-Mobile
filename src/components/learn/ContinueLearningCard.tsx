@@ -51,7 +51,7 @@ export function ContinueLearningCard({
             {subTopic ? ` — ${subTopic}` : ''}
           </Text>
         </View>
-        <ChevronRight color="#4F46E5" size={18} />
+        <ChevronRight color="#15803D" size={18} />
       </View>
 
       {showStats ? (

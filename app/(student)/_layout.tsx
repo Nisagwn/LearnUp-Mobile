@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
-import { Home, BookOpen, TrendingUp, User } from 'lucide-react-native';
+import { Home, Sprout, Map as MapIcon, BarChart3, User } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { TabBarIcon } from '@/components/common/TabBarIcon';
 
 export default function StudentLayout() {
   const { colors } = useThemeColors();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -14,8 +16,8 @@ export default function StudentLayout() {
           backgroundColor: colors.bgBase,
           borderTopColor: colors.borderSoft,
           borderTopWidth: 1,
-          height: 70,
-          paddingBottom: 10,
+          height: 70 + insets.bottom,
+          paddingBottom: 10 + insets.bottom,
           paddingTop: 8,
         },
         tabBarActiveTintColor: colors.accentFg,
@@ -37,7 +39,16 @@ export default function StudentLayout() {
         options={{
           title: 'Öğren',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon icon={BookOpen} color={color} focused={focused} />
+            <TabBarIcon icon={Sprout} color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Harita',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon icon={MapIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -46,7 +57,7 @@ export default function StudentLayout() {
         options={{
           title: 'İlerleme',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon icon={TrendingUp} color={color} focused={focused} />
+            <TabBarIcon icon={BarChart3} color={color} focused={focused} />
           ),
         }}
       />
@@ -60,7 +71,6 @@ export default function StudentLayout() {
         }}
       />
 
-      <Tabs.Screen name="chatbot" options={{ href: null }} />
       <Tabs.Screen name="quiz" options={{ href: null }} />
       <Tabs.Screen name="notes" options={{ href: null }} />
       <Tabs.Screen name="assignments" options={{ href: null }} />

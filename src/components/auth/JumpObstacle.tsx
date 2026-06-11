@@ -1,58 +1,80 @@
+import { memo } from 'react';
 import { View } from 'react-native';
-import { useThemeColors } from '@/hooks/useThemeColors';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+
+/** Oyun döngüsünün shared value'de tuttuğu engel anlık durumu. */
+export type ObsItem = { id: number; x: number; gapY: number };
 
 type Props = {
-  x: number;
+  id: number;
   gapY: number;
+  /** Tüm engellerin canlı x konumları — döngüden sürülür. */
+  obsSV: SharedValue<ObsItem[]>;
   containerHeight: number;
   gap: number;
   width?: number;
-  /** Gövde rengi (varsayılan accent). Pastel temalar için override edilebilir. */
-  bodyColor?: string;
-  /** Kapak başlığı rengi (varsayılan accentFg). */
-  capColor?: string;
+  /** Gövde rengi. */
+  bodyColor: string;
+  /** Kapak başlığı rengi. */
+  capColor: string;
 };
 
 const CAP_H = 12;
 
 /**
- * Tek bir engel çifti (üst + alt boru). "Kitap rafı" / "ağaç" estetiğinde.
+ * Tek bir engel çifti (üst + alt boru). Yatay hareket `obsSV`'den
+ * `useAnimatedStyle` ile sürülür → React re-render olmadan UI thread'inde kayar.
  */
-export function JumpObstacle({
-  x,
+function JumpObstacleBase({
+  id,
   gapY,
+  obsSV,
   containerHeight,
   gap,
   width = 46,
   bodyColor,
   capColor,
 }: Props) {
-  const { colors } = useThemeColors();
-  const body = bodyColor ?? colors.accent;
-  const cap = capColor ?? colors.accentFg;
   const topHeight = gapY - gap / 2;
   const bottomY = gapY + gap / 2;
   const bottomHeight = containerHeight - bottomY;
 
+  const slideStyle = useAnimatedStyle(() => {
+    const arr = obsSV.value;
+    let x = -999;
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i].id === id) {
+        x = arr[i].x;
+        break;
+      }
+    }
+    return { transform: [{ translateX: x }] };
+  });
+
   const bodyStyle = {
-    backgroundColor: body,
+    backgroundColor: bodyColor,
     borderColor: 'rgba(255,255,255,0.45)',
     borderWidth: 1.5,
   };
-
   const capStyle = {
-    backgroundColor: cap,
+    backgroundColor: capColor,
     borderColor: 'rgba(255,255,255,0.55)',
   };
 
   return (
-    <View pointerEvents="none">
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', left: 0, top: 0, width, height: containerHeight },
+        slideStyle,
+      ]}
+    >
       {/* Üst engel */}
       {topHeight > 0 ? (
         <View
           style={{
             position: 'absolute',
-            left: x,
+            left: 0,
             top: 0,
             width,
             height: topHeight,
@@ -107,7 +129,7 @@ export function JumpObstacle({
         <View
           style={{
             position: 'absolute',
-            left: x,
+            left: 0,
             top: bottomY,
             width,
             height: bottomHeight,
@@ -155,6 +177,8 @@ export function JumpObstacle({
           </View>
         </View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
+
+export const JumpObstacle = memo(JumpObstacleBase);

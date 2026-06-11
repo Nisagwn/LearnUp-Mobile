@@ -36,7 +36,7 @@ export function TodayBriefCard({
         <Text className="text-xs uppercase tracking-wide text-text-muted">Bugün</Text>
         {hasTarget ? (
           <View className="flex-row items-center rounded-full bg-accent-soft px-2 py-0.5">
-            <Target color="#4F46E5" size={11} />
+            <Target color="#15803D" size={11} />
             <Text className="ml-1 text-[10px] font-semibold text-accent-fg">
               {remaining > 0 ? `${remaining} soru kaldı` : 'Hedef tamam!'}
             </Text>
@@ -47,7 +47,7 @@ export function TodayBriefCard({
       <View className="mt-3 flex-row items-stretch">
         <View className="flex-1 items-start">
           <View className="flex-row items-center">
-            <Zap color="#6366F1" size={12} />
+            <Zap color="#16A34A" size={12} />
             <Text className="ml-1 text-[10px] font-medium text-text-muted">Çözülen</Text>
           </View>
           <Text className="mt-1 text-lg font-bold text-text-primary">{solvedToday}</Text>
@@ -76,7 +76,7 @@ export function TodayBriefCard({
 
       {hasTarget ? (
         <View className="mt-3">
-          <AnimatedProgressBar value={targetRatio} height={5} fillColor="#6366F1" />
+          <AnimatedProgressBar value={targetRatio} height={5} fillColor="#16A34A" />
         </View>
       ) : null}
     </View>
